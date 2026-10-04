@@ -12,6 +12,11 @@ const Login = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
+  // Use the same API URL pattern as api.js
+  const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+  // Remove '/api' suffix to get base URL for OAuth endpoint
+  const BACKEND_URL = API_BASE_URL.replace(/\/api$/, '');
+
   const handleChange = (e) => {
     setFormData({
       ...formData,
@@ -96,7 +101,7 @@ const Login = () => {
       </div>
 
       <a
-        href="http://localhost:5000/api/auth/google"
+        href={`${BACKEND_URL}/api/auth/google`}
         className="w-full flex items-center justify-center gap-3 px-4 py-2.5 border border-gray-300 rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-colors font-medium"
       >
         <svg className="w-5 h-5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
