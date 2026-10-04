@@ -6,6 +6,7 @@ const Projects = () => {
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -68,6 +69,14 @@ const Projects = () => {
     return Math.round((project.completed_task_count / project.task_count) * 100);
   };
 
+  const filteredProjects = projects.filter(project => 
+    project.name.toLowerCase().includes(searchQuery.trim().toLowerCase())
+  );
+
+  const handleClearSearch = () => {
+    setSearchQuery('');
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -88,9 +97,57 @@ const Projects = () => {
         </button>
       </div>
 
+      {/* Search Input */}
+      <div className="mb-6">
+        <div className="relative max-w-md">
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <svg 
+              className="h-5 w-5 text-gray-400" 
+              fill="none" 
+              strokeLinecap="round" 
+              strokeLinejoin="round" 
+              strokeWidth="2" 
+              viewBox="0 0 24 24" 
+              stroke="currentColor"
+              aria-hidden="true"
+            >
+              <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+            </svg>
+          </div>
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search projects..."
+            className="input pl-10 pr-10"
+            aria-label="Search projects"
+          />
+          {searchQuery && (
+            <button
+              onClick={handleClearSearch}
+              className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
+              aria-label="Clear search"
+            >
+              <svg 
+                className="h-5 w-5" 
+                fill="none" 
+                strokeLinecap="round" 
+                strokeLinejoin="round" 
+                strokeWidth="2" 
+                viewBox="0 0 24 24" 
+                stroke="currentColor"
+              >
+                <path d="M6 18L18 6M6 6l12 12"></path>
+              </svg>
+            </button>
+          )}
+        </div>
+      </div>
+
       {projects.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {projects.map(project => (
+        filteredProjects.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredProjects.map(project => (
             <Link
               key={project.id}
               to={`/projects/${project.id}`}
@@ -136,6 +193,14 @@ const Projects = () => {
             </Link>
           ))}
         </div>
+        ) : (
+          <div className="card">
+            <div className="text-center py-12 text-gray-500">
+              <p className="text-lg mb-2">No projects found</p>
+              <p className="text-sm">Try a different search term.</p>
+            </div>
+          </div>
+        )
       ) : (
         <div className="card">
           <div className="text-center py-12 text-gray-500">
