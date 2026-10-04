@@ -1,0 +1,75 @@
+import { Outlet, NavLink } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+
+const MainLayout = () => {
+  const { user, logout } = useAuth();
+
+  const navItems = [
+    { path: '/dashboard', label: 'Dashboard', icon: '📊' },
+    { path: '/projects', label: 'Projects', icon: '📁' },
+    { path: '/tasks', label: 'Tasks', icon: '✓' },
+    { path: '/team', label: 'Team', icon: '👥' },
+    { path: '/risks', label: 'Risks', icon: '⚠️' },
+    { path: '/settings', label: 'Settings', icon: '⚙️' }
+  ];
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      {/* Top Navigation */}
+      <nav className="bg-white shadow-sm border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between h-16">
+            <div className="flex items-center">
+              <h1 className="text-2xl font-bold text-primary-600">ProjectOps</h1>
+            </div>
+            
+            <div className="flex items-center space-x-4">
+              <span className="text-sm text-gray-700">
+                Welcome, <span className="font-medium">{user?.name}</span>
+              </span>
+              <button
+                onClick={logout}
+                className="text-sm text-gray-600 hover:text-gray-900"
+              >
+                Logout
+              </button>
+            </div>
+          </div>
+        </div>
+      </nav>
+
+      <div className="flex">
+        {/* Sidebar */}
+        <aside className="w-64 bg-white shadow-sm min-h-[calc(100vh-4rem)] border-r border-gray-200">
+          <nav className="p-4 space-y-1">
+            {navItems.map((item) => (
+              <NavLink
+                key={item.path}
+                to={item.path}
+                className={({ isActive }) =>
+                  `flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${
+                    isActive
+                      ? 'bg-primary-50 text-primary-700 font-medium'
+                      : 'text-gray-700 hover:bg-gray-50'
+                  }`
+                }
+              >
+                <span className="text-xl">{item.icon}</span>
+                <span>{item.label}</span>
+              </NavLink>
+            ))}
+          </nav>
+        </aside>
+
+        {/* Main Content */}
+        <main className="flex-1 p-8">
+          <div className="max-w-7xl mx-auto">
+            <Outlet />
+          </div>
+        </main>
+      </div>
+    </div>
+  );
+};
+
+export default MainLayout;
