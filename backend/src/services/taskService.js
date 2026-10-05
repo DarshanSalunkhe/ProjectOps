@@ -41,8 +41,8 @@ export const taskService = {
     return task;
   },
 
-  async getAllTasks() {
-    const tasks = await taskRepository.findAll();
+  async getAllTasks(userId) {
+    const tasks = await taskRepository.findAllByUser(userId);
     return tasks;
   },
 
@@ -112,6 +112,11 @@ export const taskService = {
 
   async getStatistics() {
     const stats = await taskRepository.getStatistics();
+    return stats;
+  },
+
+  async getStatisticsByUser(userId) {
+    const stats = await taskRepository.getStatisticsByUser(userId);
     return stats;
   }
 };

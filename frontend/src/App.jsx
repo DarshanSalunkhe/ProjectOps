@@ -13,6 +13,8 @@ import GoogleCallback from './pages/auth/GoogleCallback';
 import Dashboard from './pages/Dashboard';
 import Projects from './pages/Projects';
 import ProjectDetail from './pages/ProjectDetail';
+import ProjectMembers from './pages/ProjectMembers';
+import InvitationPage from './pages/InvitationPage';
 import Tasks from './pages/Tasks';
 import Team from './pages/Team';
 import Risks from './pages/Risks';
@@ -32,12 +34,18 @@ function App() {
           {/* OAuth callback (public route, not in AuthLayout) */}
           <Route path="/auth/callback" element={<GoogleCallback />} />
 
+          {/* Invitation page (requires auth but not in MainLayout) */}
+          <Route element={<PrivateRoute />}>
+            <Route path="/invitations/:token" element={<InvitationPage />} />
+          </Route>
+
           {/* Protected routes */}
           <Route element={<PrivateRoute />}>
             <Route element={<MainLayout />}>
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/projects" element={<Projects />} />
               <Route path="/projects/:id" element={<ProjectDetail />} />
+              <Route path="/projects/:id/members" element={<ProjectMembers />} />
               <Route path="/tasks" element={<Tasks />} />
               <Route path="/team" element={<Team />} />
               <Route path="/risks" element={<Risks />} />

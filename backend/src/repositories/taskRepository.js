@@ -71,6 +71,28 @@ export const taskRepository = {
     return result.rows;
   },
 
+  async findAllByUser(userId) {
+    const result = await query(
+      `SELECT t.*, 
+              u.name as created_by_name,
+              p.name as project_name,
+              pm.role as user_project_role,
+              json_agg(
+                json_build_object('id', au.id, 'name', au.name, 'email', au.email)
+              ) FILTER (WHERE au.id IS NOT NULL) as assigned_users
+       FROM tasks t
+       LEFT JOIN users u ON t.created_by = u.id
+       LEFT JOIN projects p ON t.project_id = p.id
+       INNER JOIN project_members pm ON p.id = pm.project_id AND pm.user_id = $1
+       LEFT JOIN task_assignments ta ON t.id = ta.task_id
+       LEFT JOIN users au ON ta.user_id = au.id
+       GROUP BY t.id, u.name, p.name, pm.role
+       ORDER BY t.created_at DESC`,
+      [userId]
+    );
+    return result.rows;
+  },
+
   async update(id, updates) {
     const fields = [];
     const values = [];
@@ -136,6 +158,24 @@ export const taskRepository = {
         COUNT(*) FILTER (WHERE deadline < CURRENT_DATE AND status != 'COMPLETED') as overdue_tasks
       FROM tasks
     `);
+    return result.rows[0];
+  },
+
+  async getStatisticsByUser(userId) {
+    const result = await query(`
+      SELECT 
+        COUNT(*) as total_tasks,
+        COUNT(*) FILTER (WHERE t.status = 'TODO') as todo_tasks,
+        COUNT(*) FILTER (WHERE t.status = 'IN_PROGRESS') as in_progress_tasks,
+        COUNT(*) FILTER (WHERE t.status = 'BLOCKED') as blocked_tasks,
+        COUNT(*) FILTER (WHERE t.status = 'COMPLETED') as completed_tasks,
+        COUNT(*) FILTER (WHERE t.priority = 'CRITICAL') as critical_tasks,
+        COUNT(*) FILTER (WHERE t.deadline < CURRENT_DATE AND t.status != 'COMPLETED') as overdue_tasks
+      FROM tasks t
+      INNER JOIN projects p ON t.project_id = p.id
+      INNER JOIN project_members pm ON p.id = pm.project_id
+      WHERE pm.user_id = $1
+    `, [userId]);
     return result.rows[0];
   }
 };

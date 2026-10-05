@@ -18,7 +18,7 @@ export const getTaskById = asyncHandler(async (req, res) => {
 });
 
 export const getAllTasks = asyncHandler(async (req, res) => {
-  const tasks = await taskService.getAllTasks();
+  const tasks = await taskService.getAllTasks(req.user.id);
   successResponse(res, tasks, 'Tasks retrieved successfully');
 });
 
@@ -43,6 +43,6 @@ export const unassignTask = asyncHandler(async (req, res) => {
 });
 
 export const getStatistics = asyncHandler(async (req, res) => {
-  const stats = await taskService.getStatistics();
+  const stats = await taskService.getStatisticsByUser(req.user.id);
   successResponse(res, stats, 'Statistics retrieved successfully');
 });
