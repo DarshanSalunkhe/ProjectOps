@@ -17,8 +17,8 @@ export const projectService = {
     return project;
   },
 
-  async getAllProjects() {
-    const projects = await projectRepository.findAll();
+  async getAllProjects(userId) {
+    const projects = await projectRepository.findAllByUser(userId);
     return projects;
   },
 
@@ -68,6 +68,11 @@ export const projectService = {
 
   async getStatistics() {
     const stats = await projectRepository.getStatistics();
+    return stats;
+  },
+
+  async getStatisticsByUser(userId) {
+    const stats = await projectRepository.getStatisticsByUser(userId);
     return stats;
   }
 };

@@ -8,7 +8,7 @@ export const createProject = asyncHandler(async (req, res) => {
 });
 
 export const getAllProjects = asyncHandler(async (req, res) => {
-  const projects = await projectService.getAllProjects();
+  const projects = await projectService.getAllProjects(req.user.id);
   successResponse(res, projects, 'Projects retrieved successfully');
 });
 
@@ -28,6 +28,6 @@ export const deleteProject = asyncHandler(async (req, res) => {
 });
 
 export const getStatistics = asyncHandler(async (req, res) => {
-  const stats = await projectService.getStatistics();
+  const stats = await projectService.getStatisticsByUser(req.user.id);
   successResponse(res, stats, 'Statistics retrieved successfully');
 });

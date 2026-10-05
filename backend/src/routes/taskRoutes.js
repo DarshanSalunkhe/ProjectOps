@@ -28,6 +28,7 @@ import {
   dependencyIdValidation
 } from '../validators/dependencyValidators.js';
 import { authenticate } from '../middleware/auth.js';
+import { requireTaskAccess, requireDeveloperOrOwner } from '../middleware/projectAuth.js';
 import { idValidation } from '../validators/common.js';
 
 const router = express.Router();
@@ -35,23 +36,77 @@ const router = express.Router();
 // All routes require authentication
 router.use(authenticate);
 
-// Statistics endpoint
+// Statistics endpoint (no specific project filtering - shows user's accessible tasks)
 router.get('/statistics', getStatistics);
 
-// Task dependencies
-router.post('/:taskId/dependencies', taskIdParamValidation, createDependencyValidation, createDependency);
-router.get('/:taskId/dependencies', taskIdParamValidation, getTaskDependencies);
-router.get('/:taskId/dependents', taskIdParamValidation, getDependentTasks);
-router.delete('/:taskId/dependencies/:dependencyId', taskIdParamValidation, dependencyIdValidation, deleteDependency);
-
-// Task assignments
-router.post('/:id/assign', idValidation, assignTaskValidation, assignTask);
-router.delete('/:id/assign/:userId', idValidation, unassignTask);
-
-// CRUD endpoints
+// Get all tasks (filtered by user's project memberships)
 router.get('/', getAllTasks);
-router.get('/:id', idValidation, getTaskById);
-router.patch('/:id', idValidation, updateTaskValidation, updateTask);
-router.delete('/:id', idValidation, deleteTask);
+
+// Task-specific routes (require task access via project membership)
+router.get('/:id', 
+  idValidation,
+  requireTaskAccess,
+  getTaskById
+);
+
+router.patch('/:id', 
+  idValidation,
+  requireTaskAccess,
+  requireDeveloperOrOwner,
+  updateTaskValidation,
+  updateTask
+);
+
+router.delete('/:id', 
+  idValidation,
+  requireTaskAccess,
+  requireDeveloperOrOwner,
+  deleteTask
+);
+
+// Task assignments (require task access)
+router.post('/:id/assign', 
+  idValidation,
+  requireTaskAccess,
+  requireDeveloperOrOwner,
+  assignTaskValidation,
+  assignTask
+);
+
+router.delete('/:id/assign/:userId', 
+  idValidation,
+  requireTaskAccess,
+  requireDeveloperOrOwner,
+  unassignTask
+);
+
+// Task dependencies (require task access)
+router.post('/:taskId/dependencies', 
+  taskIdParamValidation,
+  requireTaskAccess,
+  requireDeveloperOrOwner,
+  createDependencyValidation,
+  createDependency
+);
+
+router.get('/:taskId/dependencies', 
+  taskIdParamValidation,
+  requireTaskAccess,
+  getTaskDependencies
+);
+
+router.get('/:taskId/dependents', 
+  taskIdParamValidation,
+  requireTaskAccess,
+  getDependentTasks
+);
+
+router.delete('/:taskId/dependencies/:dependencyId', 
+  taskIdParamValidation,
+  requireTaskAccess,
+  requireDeveloperOrOwner,
+  dependencyIdValidation,
+  deleteDependency
+);
 
 export default router;

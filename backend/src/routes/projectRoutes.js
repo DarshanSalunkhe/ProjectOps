@@ -7,11 +7,28 @@ import {
   deleteProject,
   getStatistics
 } from '../controllers/projectController.js';
+import {
+  inviteMember,
+  getProjectMembers,
+  changeMemberRole,
+  removeMember,
+  getInvitationDetails,
+  acceptInvitation,
+  declineInvitation,
+  cancelInvitation
+} from '../controllers/membershipController.js';
 import { createTask, getTasksByProject } from '../controllers/taskController.js';
 import { getProjectDependencyGraph } from '../controllers/dependencyController.js';
 import { createProjectValidation, updateProjectValidation } from '../validators/projectValidators.js';
 import { createTaskValidation, projectIdValidation } from '../validators/taskValidators.js';
+import {
+  inviteMemberValidation,
+  changeMemberRoleValidation,
+  removeMemberValidation,
+  invitationTokenValidation
+} from '../validators/membershipValidators.js';
 import { authenticate } from '../middleware/auth.js';
+import { requireProjectMember, requireOwner } from '../middleware/projectAuth.js';
 import { idValidation } from '../validators/common.js';
 
 const router = express.Router();
@@ -19,21 +36,94 @@ const router = express.Router();
 // All routes require authentication
 router.use(authenticate);
 
-// Statistics endpoint
+// Statistics endpoint (no project-specific auth needed)
 router.get('/statistics', getStatistics);
 
-// Project dependency graph
-router.get('/:projectId/dependencies/graph', projectIdValidation, getProjectDependencyGraph);
+// Invitation routes (token-based, no project membership required yet)
+router.get('/invitations/:token', invitationTokenValidation, getInvitationDetails);
+router.post('/invitations/:token/accept', invitationTokenValidation, acceptInvitation);
+router.post('/invitations/:token/decline', invitationTokenValidation, declineInvitation);
 
-// Project tasks endpoints
-router.post('/:projectId/tasks', projectIdValidation, createTaskValidation, createTask);
-router.get('/:projectId/tasks', projectIdValidation, getTasksByProject);
-
-// CRUD endpoints
+// Project creation (no existing project auth needed)
 router.post('/', createProjectValidation, createProject);
+
+// Get user's projects (filtered by membership)
 router.get('/', getAllProjects);
-router.get('/:id', idValidation, getProjectById);
-router.patch('/:id', idValidation, updateProjectValidation, updateProject);
-router.delete('/:id', idValidation, deleteProject);
+
+// Project membership routes (require membership + specific roles)
+router.get('/:projectId/members', 
+  requireProjectMember, 
+  getProjectMembers
+);
+
+router.post('/:projectId/members/invite', 
+  requireProjectMember, 
+  requireOwner,
+  inviteMemberValidation, 
+  inviteMember
+);
+
+router.patch('/:projectId/members/:membershipId/role', 
+  requireProjectMember,
+  requireOwner,
+  changeMemberRoleValidation, 
+  changeMemberRole
+);
+
+router.delete('/:projectId/members/:membershipId', 
+  requireProjectMember,
+  requireOwner,
+  removeMemberValidation,
+  removeMember
+);
+
+router.delete('/:projectId/invitations/:invitationId',
+  requireProjectMember,
+  requireOwner,
+  cancelInvitation
+);
+
+// Project dependency graph (requires membership)
+router.get('/:projectId/dependencies/graph', 
+  projectIdValidation,
+  requireProjectMember,
+  getProjectDependencyGraph
+);
+
+// Project tasks endpoints (require membership)
+router.post('/:projectId/tasks', 
+  projectIdValidation, 
+  requireProjectMember,
+  createTaskValidation, 
+  createTask
+);
+
+router.get('/:projectId/tasks', 
+  projectIdValidation,
+  requireProjectMember,
+  getTasksByProject
+);
+
+// Project CRUD endpoints (require membership, OWNER for modifications)
+router.get('/:id', 
+  idValidation,
+  requireProjectMember,
+  getProjectById
+);
+
+router.patch('/:id', 
+  idValidation,
+  requireProjectMember,
+  requireOwner,
+  updateProjectValidation, 
+  updateProject
+);
+
+router.delete('/:id', 
+  idValidation,
+  requireProjectMember,
+  requireOwner,
+  deleteProject
+);
 
 export default router;
