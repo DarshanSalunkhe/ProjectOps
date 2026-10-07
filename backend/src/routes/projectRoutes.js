@@ -30,6 +30,7 @@ import {
 import { authenticate } from '../middleware/auth.js';
 import { requireProjectMember, requireOwner } from '../middleware/projectAuth.js';
 import { idValidation } from '../validators/common.js';
+import { requireProjectCreation } from '../config/permissions.js';
 
 const router = express.Router();
 
@@ -44,8 +45,8 @@ router.get('/invitations/:token', invitationTokenValidation, getInvitationDetail
 router.post('/invitations/:token/accept', invitationTokenValidation, acceptInvitation);
 router.post('/invitations/:token/decline', invitationTokenValidation, declineInvitation);
 
-// Project creation (no existing project auth needed)
-router.post('/', createProjectValidation, createProject);
+// Project creation (requires global permission)
+router.post('/', requireProjectCreation, createProjectValidation, createProject);
 
 // Get user's projects (filtered by membership)
 router.get('/', getAllProjects);

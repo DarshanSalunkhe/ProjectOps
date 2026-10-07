@@ -1,8 +1,11 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { projectService } from '../services/projectService';
+import { useAuth } from '../context/AuthContext';
+import { canCreateProject } from '../utils/permissions';
 
 const Projects = () => {
+  const { user } = useAuth();
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -92,9 +95,11 @@ const Projects = () => {
     <div>
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold">Projects</h1>
-        <button onClick={() => setShowCreateModal(true)} className="btn-primary">
-          + New Project
-        </button>
+        {canCreateProject(user) && (
+          <button onClick={() => setShowCreateModal(true)} className="btn-primary">
+            + New Project
+          </button>
+        )}
       </div>
 
       {/* Search Input */}
