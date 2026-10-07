@@ -7,6 +7,8 @@ import AuthLayout from './layouts/AuthLayout';
 // Auth pages
 import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
+import ForgotPassword from './pages/auth/ForgotPassword';
+import ResetPassword from './pages/auth/ResetPassword';
 import GoogleCallback from './pages/auth/GoogleCallback';
 
 // Main pages
@@ -19,6 +21,8 @@ import Tasks from './pages/Tasks';
 import Team from './pages/Team';
 import Risks from './pages/Risks';
 import Settings from './pages/Settings';
+import Profile from './pages/Profile';
+import AdminUsers from './pages/AdminUsers';
 
 function App() {
   return (
@@ -29,6 +33,8 @@ function App() {
           <Route element={<AuthLayout />}>
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
           </Route>
 
           {/* OAuth callback (public route, not in AuthLayout) */}
@@ -49,6 +55,8 @@ function App() {
               <Route path="/tasks" element={<Tasks />} />
               <Route path="/team" element={<Team />} />
               <Route path="/risks" element={<Risks />} />
+              <Route path="/profile" element={<Profile />} />
+              <Route path="/admin/users" element={<AdminUsers />} />
               <Route path="/settings" element={<Settings />} />
               <Route path="/" element={<Navigate to="/dashboard" replace />} />
             </Route>

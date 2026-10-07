@@ -4,6 +4,8 @@ import { projectInvitationRepository } from '../repositories/projectInvitationRe
 import { userRepository } from '../repositories/userRepository.js';
 import { projectRepository } from '../repositories/projectRepository.js';
 import { AppError } from '../middleware/errorHandler.js';
+import emailService from './emailService.js';
+import config from '../config/index.js';
 
 export const membershipService = {
   /**
@@ -12,7 +14,7 @@ export const membershipService = {
   async inviteMember(projectId, invitedEmail, role, invitedByUserId) {
     // Validate that the inviting user is the project OWNER
     const inviterMembership = await projectMemberRepository.findByProjectAndUser(
-      projectId, 
+      projectId,
       invitedByUserId
     );
 
@@ -30,7 +32,7 @@ export const membershipService = {
         projectId,
         existingUser.id
       );
-      
+
       if (existingMembership) {
         throw new AppError('User is already a member of this project', 409);
       }
@@ -63,8 +65,25 @@ export const membershipService = {
       expires_at: expiresAt
     });
 
-    // Get project details for response
+    // Get project details and inviter info
     const project = await projectRepository.findById(projectId);
+    const inviter = await userRepository.findById(invitedByUserId);
+
+    // Try to send invitation email (don't fail if email unavailable)
+    const invitationLink = `${config.frontendUrl}/invitations/${token}`;
+
+    try {
+      await emailService.sendInvitationEmail(
+        normalizedEmail,
+        project.name,
+        inviter.name,
+        invitationLink,
+        role
+      );
+    } catch (emailError) {
+      console.error('Invitation email failed:', emailError.message);
+      // Continue - invitation still created
+    }
 
     return {
       ...invitation,

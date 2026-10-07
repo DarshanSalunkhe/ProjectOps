@@ -16,6 +16,21 @@ export const authService = {
     return response.data;
   },
 
+  async updateProfile(updates) {
+    const response = await api.patch('/auth/me', updates);
+    return response.data;
+  },
+
+  async getAllUsers() {
+    const response = await api.get('/auth/users');
+    return response.data;
+  },
+
+  async updateUserRole(userId, role) {
+    const response = await api.patch(`/auth/users/${userId}/role`, { role });
+    return response.data;
+  },
+
   logout() {
     localStorage.removeItem('token');
   }
