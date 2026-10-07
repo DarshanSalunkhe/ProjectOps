@@ -1,8 +1,11 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../services/api';
+import { useAuth } from '../context/AuthContext';
+import { canCreateProject } from '../utils/permissions';
 
 const Dashboard = () => {
+  const { user } = useAuth();
   const [stats, setStats] = useState({
     projects: { total_projects: 0, active_projects: 0 },
     tasks: { total_tasks: 0, in_progress_tasks: 0, overdue_tasks: 0 }
@@ -157,7 +160,15 @@ const Dashboard = () => {
             </div>
           ) : (
             <div className="text-center py-8 text-gray-500">
-              No projects yet. <Link to="/projects" className="text-primary-600 hover:text-primary-700">Create your first project</Link>
+              {canCreateProject(user) ? (
+                <>
+                  No projects yet. <Link to="/projects" className="text-primary-600 hover:text-primary-700">Create your first project</Link>
+                </>
+              ) : (
+                <>
+                  No projects yet. Contact an administrator or project owner to be added to a project.
+                </>
+              )}
             </div>
           )}
         </div>
