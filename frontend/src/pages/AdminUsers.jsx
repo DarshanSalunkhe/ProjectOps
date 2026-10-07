@@ -1,0 +1,269 @@
+import { useState, useEffect } from 'react';
+import { useAuth } from '../context/AuthContext';
+import { authService } from '../services/authService';
+import { useNavigate } from 'react-router-dom';
+import Avatar from '../components/Avatar';
+
+const AdminUsers = () => {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [newRole, setNewRole] = useState('');
+  const [updating, setUpdating] = useState(false);
+
+  useEffect(() => {
+    // Redirect if not SYSTEM_ADMIN
+    if (user && user.role !== 'SYSTEM_ADMIN') {
+      navigate('/dashboard');
+      return;
+    }
+
+    fetchUsers();
+  }, [user, navigate]);
+
+  const fetchUsers = async () => {
+    try {
+      const data = await authService.getAllUsers();
+      setUsers(data);
+    } catch (err) {
+      setError(err.message || 'Failed to load users');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRoleChangeClick = (userData) => {
+    setSelectedUser(userData);
+    setNewRole(userData.role);
+    setError('');
+    setSuccess('');
+  };
+
+  const handleRoleChange = async () => {
+    if (!selectedUser || !newRole) return;
+
+    setUpdating(true);
+    setError('');
+    setSuccess('');
+
+    try {
+      await authService.updateUserRole(selectedUser.id, newRole);
+      setSuccess(`Role updated successfully for ${selectedUser.name}`);
+      setSelectedUser(null);
+      setNewRole('');
+      fetchUsers(); // Refresh list
+      setTimeout(() => setSuccess(''), 5000);
+    } catch (err) {
+      setError(err.message || 'Failed to update role');
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  const getRoleBadgeClass = (role) => {
+    const roleClasses = {
+      'SYSTEM_ADMIN': 'bg-purple-100 text-purple-800 border-purple-200',
+      'PROJECT_OWNER': 'bg-blue-100 text-blue-800 border-blue-200',
+      'PROJECT_MANAGER': 'bg-green-100 text-green-800 border-green-200',
+      'TEAM_MEMBER': 'bg-gray-100 text-gray-800 border-gray-200',
+      'VIEWER': 'bg-yellow-100 text-yellow-800 border-yellow-200'
+    };
+    return roleClasses[role] || 'bg-gray-100 text-gray-800 border-gray-200';
+  };
+
+  const getAvailabilityColor = (status) => {
+    const colors = {
+      'AVAILABLE': 'bg-green-500',
+      'BUSY': 'bg-yellow-500',
+      'AWAY': 'bg-orange-500',
+      'OFFLINE': 'bg-gray-500'
+    };
+    return colors[status] || 'bg-gray-500';
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading users...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold mb-2">User Management</h1>
+        <p className="text-gray-600">Manage user accounts and global roles (SYSTEM_ADMIN only)</p>
+      </div>
+
+      {error && (
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6">
+          {error}
+        </div>
+      )}
+
+      {success && (
+        <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg mb-6">
+          {success}
+        </div>
+      )}
+
+      <div className="card">
+        <div className="mb-6 flex justify-between items-center">
+          <h2 className="text-xl font-semibold">All Users ({users.length})</h2>
+        </div>
+
+        {users.length > 0 ? (
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    User
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Email
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Global Role
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Joined
+                  </th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {users.map((userData) => (
+                  <tr key={userData.id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center">
+                        <Avatar user={userData} size="sm" />
+                        <div className="ml-3">
+                          <p className="text-sm font-medium text-gray-900">
+                            {userData.name}
+                            {userData.id === user?.id && (
+                              <span className="ml-2 text-xs text-gray-500">(You)</span>
+                            )}
+                          </p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <p className="text-sm text-gray-900">{userData.email}</p>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full border ${getRoleBadgeClass(userData.role)}`}>
+                        {userData.role.replace('_', ' ')}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {new Date(userData.created_at).toLocaleDateString()}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      {userData.id === user?.id ? (
+                        <span className="text-gray-400">Cannot edit own role</span>
+                      ) : (
+                        <button
+                          onClick={() => handleRoleChangeClick(userData)}
+                          className="text-primary-600 hover:text-primary-900"
+                        >
+                          Change Role
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <p className="text-center text-gray-500 py-8">No users found</p>
+        )}
+      </div>
+
+      {/* Role Change Modal */}
+      {selectedUser && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg max-w-md w-full p-6">
+            <h2 className="text-2xl font-bold mb-4">Change User Role</h2>
+            
+            <div className="mb-6">
+              <div className="flex items-center space-x-3 mb-4">
+                <Avatar user={selectedUser} size="md" />
+                <div>
+                  <p className="font-medium text-gray-900">{selectedUser.name}</p>
+                  <p className="text-sm text-gray-600">{selectedUser.email}</p>
+                </div>
+              </div>
+
+              <div className="bg-gray-50 rounded-lg p-4 mb-4">
+                <p className="text-sm text-gray-600 mb-1">Current Role:</p>
+                <span className={`px-3 py-1 inline-flex text-sm font-semibold rounded-full border ${getRoleBadgeClass(selectedUser.role)}`}>
+                  {selectedUser.role.replace('_', ' ')}
+                </span>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  New Role
+                </label>
+                <select
+                  value={newRole}
+                  onChange={(e) => setNewRole(e.target.value)}
+                  className="input w-full"
+                >
+                  <option value="SYSTEM_ADMIN">System Admin - Platform administration</option>
+                  <option value="PROJECT_OWNER">Project Owner - Can create projects</option>
+                  <option value="PROJECT_MANAGER">Project Manager - Project management</option>
+                  <option value="TEAM_MEMBER">Team Member - Team participation</option>
+                  <option value="VIEWER">Viewer - Limited access</option>
+                </select>
+              </div>
+
+              {selectedUser.role === 'SYSTEM_ADMIN' && newRole !== 'SYSTEM_ADMIN' && (
+                <div className="mt-4 bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                  <p className="text-sm text-yellow-800">
+                    ⚠️ Warning: You are about to demote a SYSTEM_ADMIN. Ensure another admin exists before proceeding.
+                  </p>
+                </div>
+              )}
+            </div>
+
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={() => {
+                  setSelectedUser(null);
+                  setNewRole('');
+                  setError('');
+                }}
+                className="btn-secondary"
+                disabled={updating}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleRoleChange}
+                className="btn-primary"
+                disabled={updating || newRole === selectedUser.role}
+              >
+                {updating ? 'Updating...' : 'Update Role'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default AdminUsers;

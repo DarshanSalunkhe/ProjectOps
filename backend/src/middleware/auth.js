@@ -1,4 +1,4 @@
-import { verifyToken } from '../utils/jwt.js';
+import { verifyToken, isSessionRevoked } from '../utils/jwt.js';
 import { userRepository } from '../repositories/userRepository.js';
 import { AppError } from './errorHandler.js';
 
@@ -19,7 +19,15 @@ export const authenticate = async (req, res, next) => {
       throw new AppError('Invalid or expired token', 401);
     }
 
-    // Get user from database
+    // Check if session is revoked (for JWTs with jti)
+    if (decoded.jti) {
+      const revoked = await isSessionRevoked(decoded.jti);
+      if (revoked) {
+        throw new AppError('Session has been revoked', 401);
+      }
+    }
+
+    // Get user from database (provides fresh role/email)
     const user = await userRepository.findById(decoded.userId);
     if (!user) {
       throw new AppError('User not found', 401);
@@ -27,6 +35,7 @@ export const authenticate = async (req, res, next) => {
 
     // Attach user to request
     req.user = user;
+    req.tokenJti = decoded.jti; // Store jti for logout
     next();
   } catch (error) {
     if (error instanceof AppError) {

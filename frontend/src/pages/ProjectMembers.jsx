@@ -33,17 +33,17 @@ const ProjectMembers = () => {
         projectService.getById(id),
         membershipService.getProjectMembers(id)
       ]);
-      
+
       setProject(projectData);
       setMembers(membersData.members || []);
       setInvitations(membersData.invitations || []);
-      
+
       // Find current user's role by matching email with members
       if (user && user.email) {
         const currentUserMember = membersData.members?.find(
           m => m.user_email?.toLowerCase() === user.email.toLowerCase()
         );
-        
+
         if (currentUserMember) {
           setUserRole(currentUserMember.role);
         }
@@ -64,13 +64,13 @@ const ProjectMembers = () => {
 
     try {
       const result = await membershipService.inviteMember(id, inviteFormData.email, inviteFormData.role);
-      
-      // Store the invitation result to display the link
+
+      // Store the invitation result to display success state
       setInvitationResult(result);
       setShowInviteModal(false);
       setShowInvitationLink(true);
       setInviteFormData({ email: '', role: 'DEVELOPER' });
-      
+
       fetchData(); // Refresh members list
     } catch (err) {
       setError(err.message || 'Failed to send invitation');
@@ -98,7 +98,7 @@ const ProjectMembers = () => {
 
   const handleChangeRole = async (membershipId, currentRole) => {
     const newRole = currentRole === 'DEVELOPER' ? 'VIEWER' : 'DEVELOPER';
-    
+
     if (!window.confirm(`Change role to ${newRole}?`)) {
       return;
     }
@@ -166,7 +166,7 @@ const ProjectMembers = () => {
         <div className="text-center py-12">
           <p className="text-lg text-gray-600">Project not found</p>
           <Link to="/projects" className="text-primary-600 hover:text-primary-700 mt-4 inline-block">
-            ← Back to projects
+            â† Back to projects
           </Link>
         </div>
       </div>
@@ -179,7 +179,7 @@ const ProjectMembers = () => {
     <div>
       <div className="mb-6">
         <Link to={`/projects/${id}`} className="text-primary-600 hover:text-primary-700 text-sm">
-          ← Back to project
+          â† Back to project
         </Link>
       </div>
 
@@ -210,7 +210,7 @@ const ProjectMembers = () => {
       {/* Current Members */}
       <div className="card mb-6">
         <h2 className="text-xl font-semibold mb-4">Team Members</h2>
-        
+
         {members.length > 0 ? (
           <div className="space-y-3">
             {members.map(member => (
@@ -228,16 +228,16 @@ const ProjectMembers = () => {
                     </div>
                   </div>
                 </div>
-                
+
                 <div className="flex items-center space-x-3">
                   <span className={getRoleBadgeClass(member.role)}>
                     {member.role}
                   </span>
-                  
+
                   <span className="text-sm text-gray-500">
                     Joined {new Date(member.joined_at).toLocaleDateString()}
                   </span>
-                  
+
                   {isOwner && member.role !== 'OWNER' && (
                     <div className="flex space-x-2">
                       <button
@@ -269,22 +269,22 @@ const ProjectMembers = () => {
       {isOwner && invitations.length > 0 && (
         <div className="card">
           <h2 className="text-xl font-semibold mb-4">Pending Invitations</h2>
-          
+
           <div className="space-y-3">
             {invitations.map(invitation => (
               <div key={invitation.id} className="flex items-center justify-between p-4 bg-yellow-50 rounded-lg border border-yellow-200">
                 <div className="flex-1">
                   <p className="font-medium text-gray-900">{invitation.invited_email}</p>
                   <p className="text-sm text-gray-600">
-                    Invited by {invitation.invited_by_name} • Expires {new Date(invitation.expires_at).toLocaleDateString()}
+                    Invited by {invitation.invited_by_name} â€¢ Expires {new Date(invitation.expires_at).toLocaleDateString()}
                   </p>
                 </div>
-                
+
                 <div className="flex items-center space-x-3">
                   <span className={getRoleBadgeClass(invitation.role)}>
                     {invitation.role}
                   </span>
-                  
+
                   <button
                     onClick={() => handleCancelInvitation(invitation.id, invitation.invited_email)}
                     className="text-sm text-red-600 hover:text-red-700"
@@ -304,13 +304,13 @@ const ProjectMembers = () => {
           <div className="bg-white rounded-lg max-w-md w-full">
             <div className="p-6">
               <h2 className="text-2xl font-bold mb-4">Invite Member</h2>
-              
+
               {error && (
                 <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-4">
                   {error}
                 </div>
               )}
-              
+
               <form onSubmit={handleInviteMember} className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -366,91 +366,73 @@ const ProjectMembers = () => {
         </div>
       )}
 
-      {/* Invitation Link Modal */}
+      {/* Invitation Success Modal */}
       {showInvitationLink && invitationResult && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg max-w-2xl w-full">
+          <div className="bg-white rounded-lg max-w-lg w-full">
             <div className="p-6">
               <div className="flex items-center justify-center mb-4">
-                <div className="bg-green-100 rounded-full h-12 w-12 flex items-center justify-center">
-                  <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="bg-green-100 rounded-full h-16 w-16 flex items-center justify-center">
+                  <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                   </svg>
                 </div>
               </div>
 
-              <h2 className="text-2xl font-bold mb-2 text-center">Invitation Created!</h2>
+              <h2 className="text-2xl font-bold mb-2 text-center">Invitation Sent Successfully</h2>
               <p className="text-gray-600 text-center mb-6">
-                Share this invitation link with {invitationResult.invited_email}
+                An invitation email has been sent to <strong>{invitationResult.invited_email}</strong>.
+                They can join the project using the link in the email.
               </p>
 
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Invitation Details
-                  </label>
-                  <div className="bg-gray-50 rounded-lg p-4 space-y-2">
-                    <div className="flex justify-between">
-                      <span className="text-sm text-gray-600">Email:</span>
-                      <span className="text-sm font-medium">{invitationResult.invited_email}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-sm text-gray-600">Role:</span>
-                      <span className={`text-sm font-medium ${getRoleBadgeClass(invitationResult.role)}`}>
-                        {invitationResult.role}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-sm text-gray-600">Expires:</span>
-                      <span className="text-sm font-medium">
-                        {new Date(invitationResult.expires_at).toLocaleDateString()}
-                      </span>
-                    </div>
-                  </div>
+              <div className="bg-gray-50 rounded-lg p-4 space-y-3 mb-6">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-600">Invited Email:</span>
+                  <span className="text-sm font-medium">{invitationResult.invited_email}</span>
                 </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-600">Project Role:</span>
+                  <span className={`text-sm font-medium px-2 py-1 rounded ${getRoleBadgeClass(invitationResult.role)}`}>
+                    {invitationResult.role}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-600">Expires:</span>
+                  <span className="text-sm font-medium">
+                    {new Date(invitationResult.expires_at).toLocaleDateString()}
+                  </span>
+                </div>
+              </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Invitation Link
-                  </label>
+              {/* Secondary action: manual copy link */}
+              <details className="mb-4">
+                <summary className="text-sm text-gray-600 cursor-pointer hover:text-gray-900 mb-2">
+                  Need to share the invitation link manually?
+                </summary>
+                <div className="mt-2 space-y-2">
                   <div className="flex space-x-2">
                     <input
                       type="text"
                       readOnly
                       value={`${window.location.origin}/invitations/${invitationResult.token}`}
-                      className="input flex-1 font-mono text-sm bg-gray-50"
+                      className="input flex-1 font-mono text-xs bg-gray-50"
                       onClick={(e) => e.target.select()}
                     />
                     <button
                       onClick={handleCopyInvitationLink}
-                      className="btn-primary whitespace-nowrap"
+                      className="btn-secondary text-sm whitespace-nowrap"
                       title="Copy to clipboard"
                     >
-                      <svg className="w-5 h-5 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                      </svg>
                       Copy Link
                     </button>
                   </div>
-                  <p className="text-xs text-gray-500 mt-2">
-                    💡 This link can only be used once and expires in 7 days. The invited user must log in with the email address above to accept.
+                  <p className="text-xs text-gray-500">
+                    This link can only be used once and expires in 7 days.
                   </p>
                 </div>
+              </details>
 
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                  <div className="flex">
-                    <svg className="w-5 h-5 text-blue-600 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <div className="text-sm text-blue-800">
-                      <p className="font-medium mb-1">Share this link manually</p>
-                      <p>Copy the link and send it via email, chat, or any other method. Email sending will be added in a future update.</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex justify-end pt-6">
+              <div className="flex justify-end">
                 <button
                   onClick={handleCloseInvitationLink}
                   className="btn-primary"

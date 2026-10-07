@@ -1,8 +1,9 @@
 import { exchangeCodeStore } from '../utils/exchangeCodeStore.js';
 import { userRepository } from '../repositories/userRepository.js';
-import { generateToken } from '../utils/jwt.js';
+import { generateToken, createSession, getSessionExpiry } from '../utils/jwt.js';
 import { AppError, asyncHandler } from '../middleware/errorHandler.js';
 import { successResponse } from '../utils/response.js';
+import jwt from 'jsonwebtoken';
 
 /**
  * Exchange Controller
@@ -12,13 +13,13 @@ import { successResponse } from '../utils/response.js';
 /**
  * POST /api/auth/google/exchange
  * Exchange a one-time code for a JWT token
- * 
+ *
  * @param {object} req.body - { code: string }
  * @returns {object} { success: true, token: string, user: object }
  */
 export const exchangeCodeForToken = asyncHandler(async (req, res) => {
   console.log('[Exchange] Exchange endpoint called');
-  
+
   const { code } = req.body;
 
   if (!code) {
@@ -40,7 +41,7 @@ export const exchangeCodeForToken = asyncHandler(async (req, res) => {
 
   // Get user data
   const user = await userRepository.findById(userId);
-  
+
   if (!user) {
     console.log('[Exchange] ERROR: User not found for userId:', userId);
     throw new AppError('User not found', 404);
@@ -52,8 +53,11 @@ export const exchangeCodeForToken = asyncHandler(async (req, res) => {
     userRole: user.role
   });
 
-  // Generate JWT token (same as email/password login)
-  const token = generateToken(user.id);
+  // Generate JWT token with jti and create session
+  const token = generateToken(user.id, true);
+  const decoded = jwt.decode(token);
+  await createSession(decoded.jti, user.id, getSessionExpiry());
+
   console.log('[Exchange] JWT token generated successfully');
 
   // Return response matching existing login format
@@ -61,6 +65,6 @@ export const exchangeCodeForToken = asyncHandler(async (req, res) => {
     token,
     user
   }, 'Authentication successful');
-  
+
   console.log('[Exchange] Response sent successfully');
 });
