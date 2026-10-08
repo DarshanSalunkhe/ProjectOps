@@ -168,12 +168,13 @@ const ProjectDetail = () => {
         </Link>
       </div>
 
-      <div className="flex justify-between items-start mb-8">
-        <div>
-          <h1 className="text-3xl font-bold mb-2">{project.name}</h1>
-          <p className="text-gray-600">{project.description}</p>
+      <div className="mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
+        <div className="min-w-0">
+          <p className="mb-2 text-xs font-bold uppercase tracking-[0.16em] text-primary-700">Project overview</p>
+          <h1 className="mb-2 break-words text-3xl font-bold tracking-tight text-slate-900">{project.name}</h1>
+          <p className="max-w-3xl text-sm leading-6 text-slate-600">{project.description}</p>
         </div>
-        <div className="flex items-center space-x-3">
+        <div className="flex flex-wrap items-center gap-3">
           <span className={`${getStatusBadgeClass(project.status)} text-lg`}>
             {project.status}
           </span>
@@ -220,7 +221,7 @@ const ProjectDetail = () => {
         {/* Project Information */}
         <div className="card">
           <h2 className="text-xl font-semibold mb-4">Project Information</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
             <div>
               <span className="text-gray-600">Goal:</span>
               <p className="font-medium">{project.goal || 'No goal specified'}</p>
@@ -262,7 +263,7 @@ const ProjectDetail = () => {
 
         {/* Tasks */}
         <div className="card">
-          <div className="flex justify-between items-center mb-4">
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
             <h2 className="text-xl font-semibold">Tasks</h2>
             <button onClick={() => setShowTaskModal(true)} className="btn-primary">
               + Add Task
@@ -272,10 +273,10 @@ const ProjectDetail = () => {
           {tasks.length > 0 ? (
             <div className="space-y-3">
               {tasks.map(task => (
-                <div key={task.id} className="p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-                  <div className="flex justify-between items-start mb-2">
+                <div key={task.id} className="rounded-lg border border-slate-100 bg-slate-50/70 p-4 transition-colors hover:border-blue-100 hover:bg-blue-50/30">
+                  <div className="mb-2 flex flex-col justify-between gap-2 sm:flex-row sm:items-start">
                     <h3 className="font-medium text-gray-900">{task.title}</h3>
-                    <div className="flex space-x-2">
+                    <div className="flex flex-wrap gap-2">
                       <span className={getPriorityBadgeClass(task.priority)}>
                         {task.priority}
                       </span>
@@ -287,7 +288,7 @@ const ProjectDetail = () => {
                   {task.description && (
                     <p className="text-sm text-gray-600 mb-2">{task.description}</p>
                   )}
-                  <div className="flex justify-between items-center text-sm text-gray-600">
+                  <div className="flex flex-col justify-between gap-2 text-sm text-gray-600 sm:flex-row sm:items-center">
                     <div>
                       {task.assigned_users && task.assigned_users.length > 0 && (
                         <span>Assigned to: {task.assigned_users.map(u => u.name).join(', ')}</span>
@@ -307,23 +308,23 @@ const ProjectDetail = () => {
 
         {/* Future Modules Placeholders */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="card border-2 border-dashed border-gray-300 bg-gray-50">
-            <h2 className="text-xl font-semibold mb-2 text-gray-700">🔮 Dependency Graph</h2>
+          <div className="card border-dashed bg-slate-50/70">
+            <h2 className="mb-2 text-base font-semibold text-gray-700">Dependency Graph</h2>
             <p className="text-sm text-gray-500">Coming soon: Visual task dependency graph</p>
           </div>
 
-          <div className="card border-2 border-dashed border-gray-300 bg-gray-50">
-            <h2 className="text-xl font-semibold mb-2 text-gray-700">🤖 AI Planner</h2>
+          <div className="card border-dashed bg-slate-50/70">
+            <h2 className="mb-2 text-base font-semibold text-gray-700">AI Planner</h2>
             <p className="text-sm text-gray-500">Coming soon: AI-powered task decomposition</p>
           </div>
 
-          <div className="card border-2 border-dashed border-gray-300 bg-gray-50">
-            <h2 className="text-xl font-semibold mb-2 text-gray-700">⚠️ Risk Analysis</h2>
+          <div className="card border-dashed bg-slate-50/70">
+            <h2 className="mb-2 text-base font-semibold text-gray-700">Risk Analysis</h2>
             <p className="text-sm text-gray-500">Coming soon: Automated risk detection and analysis</p>
           </div>
 
-          <div className="card border-2 border-dashed border-gray-300 bg-gray-50">
-            <h2 className="text-xl font-semibold mb-2 text-gray-700">🔄 Replanning Engine</h2>
+          <div className="card border-dashed bg-slate-50/70">
+            <h2 className="mb-2 text-base font-semibold text-gray-700">Replanning Engine</h2>
             <p className="text-sm text-gray-500">Coming soon: Autonomous project replanning</p>
           </div>
         </div>
