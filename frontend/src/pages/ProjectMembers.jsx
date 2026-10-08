@@ -274,7 +274,7 @@ const ProjectMembers = () => {
                 <div className="min-w-0 flex-1">
                   <p className="font-medium text-gray-900">{invitation.invited_email}</p>
                   <p className="text-sm text-gray-600">
-                    Invited by {invitation.invited_by_name} â€¢ Expires {new Date(invitation.expires_at).toLocaleDateString()}
+                    Invited by {invitation.invited_by_name} &bull; Expires {new Date(invitation.expires_at).toLocaleDateString()}
                   </p>
                 </div>
 
