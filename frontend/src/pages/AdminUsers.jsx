@@ -14,6 +14,7 @@ const AdminUsers = () => {
   const [selectedUser, setSelectedUser] = useState(null);
   const [newRole, setNewRole] = useState('');
   const [updating, setUpdating] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     // Redirect if not SYSTEM_ADMIN
@@ -85,6 +86,10 @@ const AdminUsers = () => {
     return colors[status] || 'bg-gray-500';
   };
 
+  const filteredUsers = users.filter((userData) =>
+    `${userData.name} ${userData.email} ${userData.role}`.toLowerCase().includes(searchQuery.trim().toLowerCase())
+  );
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -98,9 +103,10 @@ const AdminUsers = () => {
 
   return (
     <div>
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">User Management</h1>
-        <p className="text-gray-600">Manage user accounts and global roles (SYSTEM_ADMIN only)</p>
+      <div className="mb-7">
+        <p className="mb-1 text-xs font-bold uppercase tracking-[0.16em] text-primary-700">Administration</p>
+        <h1 className="text-3xl font-bold tracking-tight text-slate-900">User Management</h1>
+        <p className="mt-1 text-sm text-slate-500">Manage user accounts and global roles.</p>
       </div>
 
       {error && (
@@ -116,12 +122,29 @@ const AdminUsers = () => {
       )}
 
       <div className="card">
-        <div className="mb-6 flex justify-between items-center">
-          <h2 className="text-xl font-semibold">All Users ({users.length})</h2>
+        <div className="mb-5 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+          <div><h2 className="text-lg font-bold text-slate-900">All Users <span className="ml-1 text-sm font-medium text-slate-400">{users.length}</span></h2><p className="mt-1 text-xs text-slate-500">Showing {filteredUsers.length} accounts</p></div>
+          <input type="search" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Search name, email, or role" aria-label="Search users" className="input w-full sm:max-w-xs" />
         </div>
 
-        {users.length > 0 ? (
-          <div className="overflow-x-auto">
+        {users.length > 0 ? filteredUsers.length > 0 ? (
+          <>
+          <div className="space-y-3 md:hidden">
+            {filteredUsers.map((userData) => (
+              <div key={userData.id} className="rounded-lg border border-slate-200 p-4">
+                <div className="flex items-center gap-3">
+                  <Avatar user={userData} size="md" />
+                  <div className="min-w-0 flex-1"><p className="truncate text-sm font-semibold text-slate-900">{userData.name}{userData.id === user?.id && <span className="ml-1 text-xs font-normal text-slate-400">(You)</span>}</p><p className="truncate text-xs text-slate-500">{userData.email}</p></div>
+                </div>
+                <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-3">
+                  <span className={`rounded-full border px-2.5 py-1 text-[11px] font-semibold ${getRoleBadgeClass(userData.role)}`}>{userData.role.replace('_', ' ')}</span>
+                  <span className="text-xs text-slate-500">Joined {new Date(userData.created_at).toLocaleDateString()}</span>
+                  {userData.id === user?.id ? <span className="w-full text-xs text-slate-400">Cannot edit own role</span> : <button onClick={() => handleRoleChangeClick(userData)} className="text-xs font-semibold text-primary-700 hover:text-primary-900">Change role</button>}
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="hidden overflow-x-auto md:block">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
@@ -143,7 +166,7 @@ const AdminUsers = () => {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {users.map((userData) => (
+                {filteredUsers.map((userData) => (
                   <tr key={userData.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
@@ -186,6 +209,9 @@ const AdminUsers = () => {
               </tbody>
             </table>
           </div>
+          </>
+        ) : (
+          <p className="py-8 text-center text-sm text-slate-500">No users match “{searchQuery}”.</p>
         ) : (
           <p className="text-center text-gray-500 py-8">No users found</p>
         )}
@@ -194,7 +220,7 @@ const AdminUsers = () => {
       {/* Role Change Modal */}
       {selectedUser && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg max-w-md w-full p-6">
+          <div className="max-h-[90dvh] w-full max-w-md overflow-y-auto rounded-xl bg-white p-5 shadow-xl sm:p-6">
             <h2 className="text-2xl font-bold mb-4">Change User Role</h2>
             
             <div className="mb-6">

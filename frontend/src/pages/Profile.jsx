@@ -121,9 +121,20 @@ const Profile = () => {
   }
 
   return (
-    <div className="max-w-4xl">
-      <h1 className="text-3xl font-bold mb-2">Profile & Account Settings</h1>
-      <p className="text-gray-600 mb-8">Manage your personal information and preferences</p>
+    <div className="page-enter max-w-5xl">
+      <div className="mb-7 flex flex-col gap-4 rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:flex-row sm:items-center sm:p-6">
+        <Avatar user={{ ...user, profile_photo_url: formData.profile_photo_url }} size="xl" className="ring-4 ring-blue-50" />
+        <div className="min-w-0 flex-1">
+          <p className="text-xs font-bold uppercase tracking-[0.16em] text-primary-700">Your account</p>
+          <h1 className="mt-1 break-words text-2xl font-bold tracking-tight text-slate-900">{formData.name || 'Profile & Account Settings'}</h1>
+          <p className="mt-1 text-sm text-slate-500">{user?.email}</p>
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <span className={`rounded-md px-2.5 py-1 text-xs font-semibold ${getRoleBadgeClass(user?.role)}`}>{user?.role?.replaceAll('_', ' ')}</span>
+            <span className="inline-flex items-center gap-2 rounded-md bg-slate-50 px-2.5 py-1 text-xs font-semibold text-slate-600"><span className={`h-2 w-2 rounded-full ${getAvailabilityColor(formData.availability_status)}`} />{formData.availability_status}</span>
+          </div>
+        </div>
+      </div>
+      <p className="mb-7 text-sm text-slate-500">Manage your personal information and preferences.</p>
 
       {error && (
         <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6">
@@ -157,7 +168,7 @@ const Profile = () => {
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Full Name *
@@ -299,7 +310,7 @@ const Profile = () => {
         <div className="card">
           <h2 className="text-xl font-semibold mb-6 pb-3 border-b border-gray-200">Availability & Workload</h2>
           
-          <div className="grid grid-cols-2 gap-6 mb-6">
+          <div className="mb-6 grid grid-cols-1 gap-5 sm:grid-cols-2">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Availability Status
@@ -310,10 +321,10 @@ const Profile = () => {
                 onChange={handleChange}
                 className="input"
               >
-                <option value="AVAILABLE">🟢 Available - Ready for work</option>
-                <option value="BUSY">🟡 Busy - Limited availability</option>
-                <option value="AWAY">🟠 Away - Temporarily unavailable</option>
-                <option value="OFFLINE">⚫ Offline - Not available</option>
+                <option value="AVAILABLE">Available - Ready for work</option>
+                <option value="BUSY">Busy - Limited availability</option>
+                <option value="AWAY">Away - Temporarily unavailable</option>
+                <option value="OFFLINE">Offline - Not available</option>
               </select>
             </div>
 

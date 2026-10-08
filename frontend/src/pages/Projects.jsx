@@ -92,19 +92,23 @@ const Projects = () => {
   }
 
   return (
-    <div>
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold">Projects</h1>
+    <div className="page-enter">
+      <div className="mb-7 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
+        <div>
+          <p className="mb-1 text-xs font-bold uppercase tracking-[0.16em] text-primary-700">Portfolio</p>
+          <h1 className="text-3xl font-bold tracking-tight text-slate-900">Projects</h1>
+          <p className="mt-1 text-sm text-slate-500">Keep every initiative moving with a clear view of progress.</p>
+        </div>
         {canCreateProject(user) && (
-          <button onClick={() => setShowCreateModal(true)} className="btn-primary">
-            + New Project
+          <button onClick={() => setShowCreateModal(true)} className="btn-primary self-start sm:self-auto">
+            <span className="text-lg leading-none">+</span> New Project
           </button>
         )}
       </div>
 
       {/* Search Input */}
       <div className="mb-6">
-        <div className="relative max-w-md">
+        <div className="relative max-w-xl">
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
             <svg 
               className="h-5 w-5 text-gray-400" 
@@ -156,10 +160,10 @@ const Projects = () => {
             <Link
               key={project.id}
               to={`/projects/${project.id}`}
-              className="card hover:shadow-lg transition-shadow"
+              className="card group transition-all duration-200 hover:-translate-y-1 hover:border-blue-200 hover:shadow-lg"
             >
               <div className="flex justify-between items-start mb-3">
-                <h3 className="text-xl font-semibold text-gray-900">{project.name}</h3>
+                <h3 className="min-w-0 text-lg font-bold tracking-tight text-slate-900 transition-colors group-hover:text-primary-700">{project.name}</h3>
                 <span className={getStatusBadgeClass(project.status)}>
                   {project.status}
                 </span>
@@ -169,30 +173,31 @@ const Projects = () => {
                 <p className="text-gray-600 text-sm mb-4 line-clamp-2">{project.description}</p>
               )}
 
-              <div className="space-y-2 text-sm">
+              <div className="space-y-3 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Tasks</span>
+                  <span className="text-slate-500">Tasks</span>
                   <span className="font-medium">
                     {project.completed_task_count} / {project.task_count}
                   </span>
                 </div>
                 
-                <div className="w-full bg-gray-200 rounded-full h-2">
+                <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100">
                   <div 
-                    className="bg-primary-600 h-2 rounded-full transition-all" 
+                    className="h-full rounded-full bg-gradient-to-r from-primary-600 to-sky-400 transition-all"
                     style={{ width: `${calculateProgress(project)}%` }}
                   ></div>
                 </div>
 
                 {project.deadline && (
-                  <div className="flex justify-between text-gray-600">
+                  <div className="flex justify-between text-slate-500">
                     <span>Deadline</span>
                     <span>{new Date(project.deadline).toLocaleDateString()}</span>
                   </div>
                 )}
 
-                <div className="pt-2 border-t text-gray-600">
+                <div className="flex justify-between border-t border-slate-100 pt-3 text-xs text-slate-500">
                   Created by {project.created_by_name}
+                  <span className="font-semibold text-primary-700" aria-hidden="true">Open →</span>
                 </div>
               </div>
             </Link>

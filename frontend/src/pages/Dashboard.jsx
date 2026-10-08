@@ -80,54 +80,40 @@ const Dashboard = () => {
   }
 
   return (
-    <div>
-      <h1 className="text-3xl font-bold mb-8">Dashboard</h1>
-      
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <div className="card">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600">Total Projects</p>
-              <p className="text-3xl font-bold text-gray-900">{stats.projects.total_projects || 0}</p>
-            </div>
-            <div className="text-4xl">📁</div>
+    <div className="page-enter">
+      <section className="dashboard-hero mb-7 px-6 py-7 sm:px-9 sm:py-9">
+        <div className="relative z-10 max-w-2xl">
+          <p className="mb-2 text-xs font-bold uppercase tracking-[0.18em] text-blue-200">Your workspace at a glance</p>
+          <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">Good to see you, {user?.name?.split(' ')[0] || 'there'}.</h1>
+          <p className="mt-2 max-w-xl text-sm leading-6 text-blue-100/80">Track the moving pieces, spot what needs attention, and keep the team moving forward.</p>
+          <div className="mt-5 flex flex-wrap gap-3">
+            <Link to="/projects" className="inline-flex min-h-10 items-center rounded-lg bg-white px-4 text-sm font-semibold text-slate-900 shadow-sm transition hover:bg-blue-50">Explore projects</Link>
+            {canCreateProject(user) && <Link to="/projects" className="inline-flex min-h-10 items-center rounded-lg border border-white/25 px-4 text-sm font-semibold text-white transition hover:bg-white/10">Start a project</Link>}
           </div>
         </div>
+      </section>
 
-        <div className="card">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600">Active Tasks</p>
-              <p className="text-3xl font-bold text-gray-900">{stats.tasks.in_progress_tasks || 0}</p>
-            </div>
-            <div className="text-4xl">✓</div>
-          </div>
-        </div>
+      <div className="mb-3 flex items-end justify-between">
+        <div><h2 className="text-base font-bold text-slate-900">Workspace pulse</h2><p className="mt-1 text-xs text-slate-500">Live counts from your projects and tasks</p></div>
+        <Link to="/tasks" className="text-xs font-semibold text-primary-700 hover:text-primary-900">View tasks <span aria-hidden="true">→</span></Link>
+      </div>
 
-        <div className="card">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600">Overdue Tasks</p>
-              <p className="text-3xl font-bold text-red-600">{stats.tasks.overdue_tasks || 0}</p>
-            </div>
-            <div className="text-4xl">⚠️</div>
+      <div className="mb-7 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        {[
+          { label: 'Total projects', value: stats.projects.total_projects || 0, note: `${stats.projects.active_projects || 0} currently active`, color: 'bg-blue-50 text-blue-700', icon: 'P' },
+          { label: 'In progress', value: stats.tasks.in_progress_tasks || 0, note: `${stats.tasks.total_tasks || 0} tasks in workspace`, color: 'bg-cyan-50 text-cyan-700', icon: '↗' },
+          { label: 'Overdue tasks', value: stats.tasks.overdue_tasks || 0, note: 'Needs attention', color: 'bg-rose-50 text-rose-700', icon: '!' },
+          { label: 'Active projects', value: stats.projects.active_projects || 0, note: `${stats.projects.completed_projects || 0} completed`, color: 'bg-emerald-50 text-emerald-700', icon: '✓' }
+        ].map((item) => (
+          <div key={item.label} className="card stat-card p-5">
+            <div className="flex items-start justify-between"><div><p className="text-xs font-semibold text-slate-500">{item.label}</p><p className="mt-3 text-3xl font-bold tracking-tight text-slate-900">{item.value}</p></div><span className={`flex h-10 w-10 items-center justify-center rounded-xl text-sm font-bold ${item.color}`}>{item.icon}</span></div>
+            <p className="mt-3 border-t border-slate-100 pt-3 text-xs text-slate-500">{item.note}</p>
           </div>
-        </div>
-
-        <div className="card">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600">Active Projects</p>
-              <p className="text-3xl font-bold text-gray-900">{stats.projects.active_projects || 0}</p>
-            </div>
-            <div className="text-4xl">🚀</div>
-          </div>
-        </div>
+        ))}
       </div>
 
       {/* Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 gap-5 2xl:grid-cols-[1.15fr_.85fr]">
         {/* Recent Projects */}
         <div className="card">
           <div className="flex justify-between items-center mb-4">

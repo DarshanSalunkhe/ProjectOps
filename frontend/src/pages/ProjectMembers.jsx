@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { membershipService } from '../services/membershipService';
 import { projectService } from '../services/projectService';
 import { useAuth } from '../context/AuthContext';
+import Avatar from '../components/Avatar';
 
 const ProjectMembers = () => {
   const { id } = useParams();
@@ -183,13 +184,14 @@ const ProjectMembers = () => {
         </Link>
       </div>
 
-      <div className="flex justify-between items-center mb-8">
-        <div>
+      <div className="mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
+        <div className="min-w-0">
+          <p className="mb-1 text-xs font-bold uppercase tracking-[0.16em] text-primary-700">Project team</p>
           <h1 className="text-3xl font-bold">{project.name} - Members</h1>
           <p className="text-gray-600 mt-1">Manage project team and permissions</p>
         </div>
         {isOwner && (
-          <button onClick={() => setShowInviteModal(true)} className="btn-primary">
+          <button onClick={() => setShowInviteModal(true)} className="btn-primary self-start sm:self-auto">
             + Invite Member
           </button>
         )}
@@ -214,14 +216,10 @@ const ProjectMembers = () => {
         {members.length > 0 ? (
           <div className="space-y-3">
             {members.map(member => (
-              <div key={member.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                <div className="flex-1">
+              <div key={member.id} className="flex flex-col gap-4 rounded-lg border border-slate-100 bg-slate-50/70 p-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="min-w-0 flex-1">
                   <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center">
-                      <span className="text-primary-700 font-semibold text-sm">
-                        {member.user_name?.charAt(0).toUpperCase() || '?'}
-                      </span>
-                    </div>
+                    <Avatar user={{ name: member.user_name, profile_photo_url: member.profile_photo_url }} size="md" />
                     <div>
                       <p className="font-medium text-gray-900">{member.user_name}</p>
                       <p className="text-sm text-gray-600">{member.user_email}</p>
@@ -229,7 +227,7 @@ const ProjectMembers = () => {
                   </div>
                 </div>
 
-                <div className="flex items-center space-x-3">
+                <div className="flex flex-wrap items-center gap-3 sm:justify-end">
                   <span className={getRoleBadgeClass(member.role)}>
                     {member.role}
                   </span>
@@ -272,15 +270,15 @@ const ProjectMembers = () => {
 
           <div className="space-y-3">
             {invitations.map(invitation => (
-              <div key={invitation.id} className="flex items-center justify-between p-4 bg-yellow-50 rounded-lg border border-yellow-200">
-                <div className="flex-1">
+              <div key={invitation.id} className="flex flex-col gap-3 rounded-lg border border-amber-200 bg-amber-50/70 p-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="min-w-0 flex-1">
                   <p className="font-medium text-gray-900">{invitation.invited_email}</p>
                   <p className="text-sm text-gray-600">
                     Invited by {invitation.invited_by_name} â€¢ Expires {new Date(invitation.expires_at).toLocaleDateString()}
                   </p>
                 </div>
 
-                <div className="flex items-center space-x-3">
+                <div className="flex flex-wrap items-center gap-3 sm:justify-end">
                   <span className={getRoleBadgeClass(invitation.role)}>
                     {invitation.role}
                   </span>
