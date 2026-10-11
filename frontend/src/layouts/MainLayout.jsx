@@ -1,4 +1,6 @@
-import { useEffect, useState, useRef } from 'react';
+import { CollectionSkeleton } from '../components/WorkspaceUI';
+import { getStoredTheme, setTheme } from '../utils/theme';
+import { useEffect, useState, useRef, Suspense } from 'react';
 import { Outlet, NavLink, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { projectService } from '../services/projectService';
@@ -32,16 +34,20 @@ const MainLayout = () => {
   const sidebarRef = useRef(null);
   const mainRef = useRef(null);
   const [collapsed, setCollapsed] = useState(() => localStorage.getItem('projectops-sidebar') === 'collapsed');
-  const [assistantOpen, setAssistantOpen] = useState(() => typeof window === 'undefined' || window.innerWidth >= 1024);
+  const [assistantOpen, setAssistantOpen] = useState(() => localStorage.getItem('projectops-assistant') === 'open');
+  useEffect(() => { localStorage.setItem('projectops-assistant', assistantOpen ? 'open' : 'closed'); }, [assistantOpen]);
+  const [themePreference, setThemePreference] = useState(getStoredTheme);
+  useEffect(() => { const sync = () => setThemePreference(getStoredTheme()); window.addEventListener('projectops:theme-changed', sync); window.addEventListener('storage', sync); return () => { window.removeEventListener('projectops:theme-changed', sync); window.removeEventListener('storage', sync); }; }, []);
+  const toggleTheme = () => setTheme(document.documentElement.classList.contains('dark') ? 'light' : 'dark');
   const [profileOpen, setProfileOpen] = useState(false);
   const profileRef = useRef(null);
   const [projects, setProjects] = useState([]);
   const [projectError, setProjectError] = useState('');
   const [query, setQuery] = useState('');
   const [projectsOpen, setProjectsOpen] = useState(true);
-  useEffect(() => { let current = true; projectService.getAll().then(data => { if(current) { setProjects(data); setProjectError(''); } }).catch(() => { if(current) setProjectError('Projects unavailable'); }); return () => { current = false; }; }, [location.pathname]);
+  useEffect(() => { let current = true; const refresh = () => projectService.getAll().then(data => { if(current) { setProjects(data); setProjectError(''); } }).catch(() => { if(current) setProjectError('Projects unavailable'); }); refresh(); window.addEventListener('projectops:projects-changed', refresh); return () => { current = false; window.removeEventListener('projectops:projects-changed', refresh); }; }, [location.pathname]);
   useEffect(() => { localStorage.setItem('projectops-sidebar', collapsed ? 'collapsed' : 'expanded'); }, [collapsed]);
-  useEffect(() => { const close = event => { if(event.key === 'Escape') setDrawerOpen(false); }; window.addEventListener('keydown', close); return () => window.removeEventListener('keydown', close); }, []);
+  useEffect(() => { const close = event => { if(event.key === 'Escape') { setDrawerOpen(false); setProfileOpen(false); } }; window.addEventListener('keydown', close); return () => window.removeEventListener('keydown', close); }, []);
   // Close profile dropdown when clicking outside
   useEffect(() => {
     const handler = (e) => { if (profileRef.current && !profileRef.current.contains(e.target)) setProfileOpen(false); };
@@ -98,6 +104,7 @@ const MainLayout = () => {
         <div className="workspace-brand"><button className="mini-button mobile-menu" onClick={() => setDrawerOpen(!drawerOpen)} aria-label="Open navigation" aria-expanded={drawerOpen}><Icon name="menu" /></button><img src="/projectops-icon.svg" alt="" width={23} height={23} /><span>ProjectOps</span><span className="brand-chevron">⌄</span></div>
         <div className="workspace-search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true"><circle cx="10" cy="10" r="6" /><path d="m15 15 5 5" /></svg><input type="search" aria-label="Search workspace projects" placeholder="Search projects…" value={query} onChange={e => {setQuery(e.target.value); setCollapsed(false); setProjectsOpen(true);}} />{query && <div className="workspace-search-results">{filteredProjects.length ? filteredProjects.map(project => <NavLink key={project.id} to={'/projects/'+project.id+'?tab=tasks'} onClick={() => setQuery('')}>{project.name}</NavLink>) : <p>No matching projects</p>}</div>}</div>
         <div className="workspace-header-actions"><button className={`assistant-toggle ${assistantOpen ? 'is-active' : ''}`} aria-expanded={assistantOpen} onClick={() => setAssistantOpen(!assistantOpen)} aria-label="Toggle AI assistant"><Icon name="ai" className="assistant-toggle-icon" /><span className="assistant-toggle-label">AI assistant</span></button>
+          <button className="theme-toggle" onClick={toggleTheme} aria-label="Toggle light and dark theme" title={`Theme: ${themePreference}`}><span aria-hidden="true">◐</span></button>
           {/* Profile dropdown */}
           <div ref={profileRef} className="profile-menu-wrap">
             <button
@@ -109,7 +116,7 @@ const MainLayout = () => {
               <Avatar user={user} size="sm" />
             </button>
             {profileOpen && (
-              <div className="profile-dropdown" role="menu">
+              <div className="profile-dropdown" aria-label="Account controls">
                 <div className="profile-dropdown-header">
                   <Avatar user={user} size="md" />
                   <div className="profile-dropdown-info">
@@ -121,7 +128,7 @@ const MainLayout = () => {
                 <Link
                   to="/profile"
                   className="profile-dropdown-item"
-                  role="menuitem"
+
                   onClick={() => setProfileOpen(false)}
                 >
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M5 21a7 7 0 0 1 14 0"/></svg>
@@ -130,7 +137,7 @@ const MainLayout = () => {
                 <Link
                   to="/settings"
                   className="profile-dropdown-item"
-                  role="menuitem"
+
                   onClick={() => setProfileOpen(false)}
                 >
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
@@ -139,7 +146,7 @@ const MainLayout = () => {
                 <div className="profile-dropdown-divider" />
                 <button
                   className="profile-dropdown-item profile-dropdown-logout"
-                  role="menuitem"
+
                   onClick={() => { setProfileOpen(false); logout(); }}
                 >
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M10 17l5-5-5-5M15 12H3"/><path d="M12 3h6a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-6"/></svg>
@@ -170,9 +177,15 @@ const MainLayout = () => {
           <section className="sidebar-projects"><button className="sidebar-section-label" onClick={() => setProjectsOpen(!projectsOpen)} aria-expanded={projectsOpen}>Projects <span>{projectsOpen ? '⌄' : '›'}</span></button>{projectsOpen && <div>{projectError ? <p role="alert" className="sidebar-empty">{projectError}</p> : filteredProjects.map(project => <NavLink key={project.id} to={'/projects/'+project.id+'?tab=tasks'} onClick={() => setDrawerOpen(false)} className={({isActive}) => 'sidebar-link sidebar-project ' + (isActive ? 'sidebar-link-active' : '')}><span className="project-glyph">▧</span><span className="truncate">{project.name}</span></NavLink>)}{!projectError && !filteredProjects.length && <p className="sidebar-empty">{query ? 'No matching projects' : 'No projects yet'}</p>}</div>}</section>
           <div className="sidebar-footer"><span className="workspace-plan">▧ Workspace</span><button className="mini-button" onClick={logout} aria-label="Log out" title="Log out"><Icon name="logout" /></button></div>
         </aside>
-        <main ref={mainRef} id="main-content" tabIndex={-1} className="workspace-main"><Outlet /></main>
+        <main ref={mainRef} id="main-content" tabIndex={-1} className="workspace-main"><Suspense fallback={<CollectionSkeleton label="Opening workspace…" />}><Outlet /></Suspense></main>
         {assistantOpen && <WorkspaceAssistant project={currentProject} onClose={() => setAssistantOpen(false)} />}
       </div>
+      <nav className="phone-navigation" aria-label="Phone navigation">
+        {[{ path: '/dashboard', label: 'Home', icon: 'dashboard' }, { path: '/projects', label: 'Projects', icon: 'projects' }, { path: '/tasks', label: 'Tasks', icon: 'tasks' }, { path: '/team', label: 'Team', icon: 'team' }].map(item =>
+          <NavLink key={item.path} to={item.path} className={({ isActive }) => isActive ? 'is-active' : ''} onClick={() => { setDrawerOpen(false); setAssistantOpen(false); }}><Icon name={item.icon} /><span>{item.label}</span></NavLink>
+        )}
+        <button aria-label="More navigation" aria-expanded={drawerOpen} onClick={() => { setDrawerOpen(open => !open); setAssistantOpen(false); }}><Icon name="menu" /><span>More</span></button>
+      </nav>
     </div>
   );
 };

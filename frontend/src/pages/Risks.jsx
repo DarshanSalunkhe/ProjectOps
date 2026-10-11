@@ -47,7 +47,7 @@ const Risks = () => {
     <div className="page-enter" style={{ maxWidth: '760px' }}>
       {/* Header */}
       <div style={{ marginBottom: '24px' }}>
-        <p style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.12em', color: 'var(--violet)', marginBottom: '5px' }}>Intelligence</p>
+        <p style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.12em', color: 'var(--accent-text)', marginBottom: '5px' }}>Intelligence</p>
         <h1 style={{ fontSize: '26px', fontWeight: 800, letterSpacing: '-0.04em', color: 'var(--ink)', marginBottom: '4px' }}>Risk Management</h1>
         <p style={{ fontSize: '13px', color: 'var(--ink-secondary)' }}>AI-powered risk detection and analysis</p>
       </div>
@@ -101,7 +101,7 @@ const Risks = () => {
           </button>
         </div>
 
-        {loading ? <LoadingState label="Analyzing risks…" /> : risks.length > 0 ? (
+        {loading ? <LoadingState variant="ai" label="Loading risk analysis…" /> : risks.length > 0 ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
             {risks.map((risk, idx) => {
               const cfg = SEV[risk.severity] || SEV.LOW;

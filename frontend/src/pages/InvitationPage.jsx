@@ -97,7 +97,7 @@ const InvitationPage = () => {
 
   if (error && !invitation) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
+      <div className="invitation-page min-h-screen flex items-center justify-center bg-gray-50 p-4">
         <div className="card max-w-md w-full text-center">
           <div className="bg-red-100 rounded-full h-16 w-16 flex items-center justify-center mx-auto mb-4">
             <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -116,7 +116,7 @@ const InvitationPage = () => {
 
   if (success) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
+      <div className="invitation-page min-h-screen flex items-center justify-center bg-gray-50 p-4">
         <div className="card max-w-md w-full text-center">
           <div className="bg-green-100 rounded-full h-16 w-16 flex items-center justify-center mx-auto mb-4">
             <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -131,7 +131,7 @@ const InvitationPage = () => {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
+    <div className="invitation-page min-h-screen flex items-center justify-center bg-gray-50 p-4">
       <div className="card max-w-2xl w-full">
         <div className="text-center mb-6">
           <div className="bg-primary-100 rounded-full h-16 w-16 flex items-center justify-center mx-auto mb-4">

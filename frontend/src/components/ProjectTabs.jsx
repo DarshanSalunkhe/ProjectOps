@@ -1,3 +1,4 @@
+import { Modal } from './WorkspaceUI';
 import { useState, useEffect, useRef } from 'react';
 import { milestoneService } from '../services/milestoneService';
 import { activityService } from '../services/activityService';
@@ -10,7 +11,7 @@ import GithubSyncPanel from './GithubSyncPanel';
 
 // Tab Navigation Component
 export const TabNav = ({ tabs, activeTab, onTabChange }) => (
-  <div className="project-tabs"><nav aria-label="Project sections">{tabs.map(tab => <button key={tab.id} aria-pressed={activeTab === tab.id} onClick={() => onTabChange(tab.id)} className={`project-tab ${activeTab === tab.id ? 'project-tab-active' : ''}`}>{tab.label}</button>)}</nav></div>
+  <div className="project-tabs"><label className="phone-project-section">Project section<select className="input" value={activeTab} onChange={event => onTabChange(event.target.value)}>{tabs.map(tab => <option key={tab.id} value={tab.id}>{tab.label}</option>)}</select></label><nav aria-label="Project sections">{tabs.map(tab => <button key={tab.id} aria-pressed={activeTab === tab.id} onClick={() => onTabChange(tab.id)} className={`project-tab ${activeTab === tab.id ? 'project-tab-active' : ''}`}>{tab.label}</button>)}</nav></div>
 );
 
 // Milestones Tab Component
@@ -81,7 +82,7 @@ export const MilestonesTab = ({ projectId, userRole, members = [] }) => {
 
   return (
     <div>
-      <div className="mb-4 flex justify-between items-center">
+      <div className="mobile-stack-row mb-4 flex justify-between items-center">
         <h3 className="text-lg font-semibold">Project Milestones</h3>
         {canEdit && (
           <button onClick={() => setShowModal(true)} className="btn-primary">
@@ -109,7 +110,7 @@ export const MilestonesTab = ({ projectId, userRole, members = [] }) => {
                   {milestone.description && (
                     <p className="text-sm text-gray-600 mt-1">{milestone.description}</p>
                   )}
-                  <div className="flex items-center gap-4 mt-2 text-xs text-gray-500">
+                  <div className="flex flex-wrap items-center gap-4 mt-2 text-xs text-gray-500">
                     {milestone.due_date && (
                       <span>Due: {new Date(milestone.due_date).toLocaleDateString()}</span>
                     )}
@@ -143,9 +144,8 @@ export const MilestonesTab = ({ projectId, userRole, members = [] }) => {
       )}
 
       {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg max-w-lg w-full p-6">
-            <h3 className="text-xl font-bold mb-4">Create Milestone</h3>
+        <Modal title="Create Milestone" onClose={() => setShowModal(false)}>
+
             {error && (
               <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-4 text-sm">
                 {error}
@@ -187,8 +187,7 @@ export const MilestonesTab = ({ projectId, userRole, members = [] }) => {
                 <button type="submit" className="btn-primary">Create</button>
               </div>
             </form>
-          </div>
-        </div>
+        </Modal>
       )}
     </div>
   );
@@ -339,7 +338,7 @@ export const RepositoryTab = ({ project, projectId, userRole, onUpdate }) => {
                 <p className="text-slate-500 text-sm">Fetching repository data…</p>
               ) : repoData?.connected ? (
                 <>
-                  <div className="flex items-start justify-between gap-4">
+                  <div className="mobile-stack-row flex items-start justify-between gap-4">
                     <div>
                       <div className="flex items-center gap-2 mb-1">
                         <span className="text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-700 font-medium">Connected</span>
@@ -347,7 +346,7 @@ export const RepositoryTab = ({ project, projectId, userRole, onUpdate }) => {
                       </div>
                       <h4 className="font-semibold text-slate-900">{repoData.repo.full_name}</h4>
                       {repoData.repo.description && <p className="text-sm text-slate-500 mt-1">{repoData.repo.description}</p>}
-                      <div className="flex gap-3 mt-2 text-xs text-slate-500">
+                      <div className="flex flex-wrap gap-3 mt-2 text-xs text-slate-500">
                         <span>Branch: {repoData.repo.default_branch}</span>
                         <span>{repoData.repo.open_issues_count} open issues</span>
                         {repoData.repo.private && <span className="bg-amber-50 text-amber-700 px-1 rounded">Private</span>}
@@ -482,7 +481,7 @@ export const DependenciesTab = ({ projectId, tasks }) => {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-4">
+      <div className="mobile-stack-row flex items-center justify-between mb-4">
         <h3 className="text-lg font-semibold">Task Dependencies</h3>
         <div className="flex gap-2">
           <button

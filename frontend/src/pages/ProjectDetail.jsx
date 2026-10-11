@@ -1,4 +1,6 @@
-import { useState, useEffect } from 'react';
+import { Modal, CollectionSkeleton } from '../components/WorkspaceUI';
+import { useFeedback } from '../components/Feedback';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { projectService } from '../services/projectService';
 import { taskService } from '../services/taskService';
@@ -23,6 +25,9 @@ const ProjectDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const notify = useFeedback();
+  const taskSavingRef = useRef(false);
+  const [taskSaving, setTaskSaving] = useState(false);
   const [project, setProject] = useState(null);
   const [tasks, setTasks] = useState([]);
   const [members, setMembers] = useState([]);
@@ -158,11 +163,14 @@ const ProjectDetail = () => {
 
   const handleCreateTask = async (e) => {
     e.preventDefault();
+    if (taskSavingRef.current) return;
+    taskSavingRef.current = true; setTaskSaving(true);
     setError('');
 
     try {
       await taskService.create(id, taskFormData);
       setShowTaskModal(false);
+      notify('Task created successfully.');
       setTaskFormData({
         title: '',
         description: '',
@@ -178,7 +186,7 @@ const ProjectDetail = () => {
       fetchProjectData();
     } catch (err) {
       setError(err.message || 'Failed to create task');
-    }
+    } finally { taskSavingRef.current = false; setTaskSaving(false); }
   };
 
   const handleArchive = async () => {
@@ -256,16 +264,7 @@ const ProjectDetail = () => {
   const isOwner = userRole === 'OWNER';
   const canManageTasks = userRole === 'OWNER' || userRole === 'DEVELOPER';
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading project...</p>
-        </div>
-      </div>
-    );
-  }
+  if (loading) return <CollectionSkeleton label="Loading project workspace…" count={4} />;
 
   if (!project) {
     return (
@@ -505,30 +504,26 @@ const ProjectDetail = () => {
 
       {/* Create Task Modal */}
       {showTaskModal && canManageTasks && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px', zIndex: 50 }}>
-          <div className="card" style={{ maxWidth: '600px', width: '100%', maxHeight: '90vh', overflowY: 'auto', borderRadius: '16px', padding: '28px', animation: 'slideUp 0.25s ease-out' }}>
-            <h2 style={{ fontSize: '18px', fontWeight: 800, letterSpacing: '-0.02em', color: 'var(--ink)', marginBottom: '20px' }}>Create New Task</h2>
-
-            {error && <div className="error-state" style={{ marginBottom: '16px' }}>{error}</div>}
-
+        <Modal title="Create new task" onClose={() => setShowTaskModal(false)} busy={taskSaving}>
+          {error && <p className="error-state mb-4" role="alert">{error}</p>}
             <form onSubmit={handleCreateTask} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               {/* Title */}
               <div>
-                <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--ink-secondary)', marginBottom: '6px' }}>Task title *</label>
-                <input type="text" required value={taskFormData.title} onChange={e => setTaskFormData({ ...taskFormData, title: e.target.value })} className="input" placeholder="e.g. Implement login API" />
+                <label htmlFor="task-title" style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--ink-secondary)', marginBottom: '6px' }}>Task title *</label>
+                <input id="task-title" type="text" required value={taskFormData.title} onChange={e => setTaskFormData({ ...taskFormData, title: e.target.value })} className="input" placeholder="e.g. Implement login API" />
               </div>
 
               {/* Description */}
               <div>
-                <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--ink-secondary)', marginBottom: '6px' }}>Description</label>
-                <textarea value={taskFormData.description} onChange={e => setTaskFormData({ ...taskFormData, description: e.target.value })} className="input" rows={3} placeholder="What needs to be done?" style={{ resize: 'vertical' }} />
+                <label htmlFor="task-description" style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--ink-secondary)', marginBottom: '6px' }}>Description</label>
+                <textarea id="task-description" value={taskFormData.description} onChange={e => setTaskFormData({ ...taskFormData, description: e.target.value })} className="input" rows={3} placeholder="What needs to be done?" style={{ resize: 'vertical' }} />
               </div>
 
               {/* Status + Priority */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+              <div className="form-columns">
                 <div>
-                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--ink-secondary)', marginBottom: '6px' }}>Status</label>
-                  <select value={taskFormData.status} onChange={e => setTaskFormData({ ...taskFormData, status: e.target.value })} className="input">
+                  <label htmlFor="task-status" style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--ink-secondary)', marginBottom: '6px' }}>Status</label>
+                  <select id="task-status" value={taskFormData.status} onChange={e => setTaskFormData({ ...taskFormData, status: e.target.value })} className="input">
                     <option value="TODO">To Do</option>
                     <option value="IN_PROGRESS">In Progress</option>
                     <option value="BLOCKED">Blocked</option>
@@ -536,8 +531,8 @@ const ProjectDetail = () => {
                   </select>
                 </div>
                 <div>
-                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--ink-secondary)', marginBottom: '6px' }}>Priority</label>
-                  <select value={taskFormData.priority} onChange={e => setTaskFormData({ ...taskFormData, priority: e.target.value })} className="input">
+                  <label htmlFor="task-priority" style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--ink-secondary)', marginBottom: '6px' }}>Priority</label>
+                  <select id="task-priority" value={taskFormData.priority} onChange={e => setTaskFormData({ ...taskFormData, priority: e.target.value })} className="input">
                     <option value="LOW">Low</option>
                     <option value="MEDIUM">Medium</option>
                     <option value="HIGH">High</option>
@@ -547,14 +542,14 @@ const ProjectDetail = () => {
               </div>
 
               {/* Hours + Deadline */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+              <div className="form-columns">
                 <div>
-                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--ink-secondary)', marginBottom: '6px' }}>Estimated hours</label>
-                  <input type="number" min="0" step="0.5" value={taskFormData.estimated_hours} onChange={e => setTaskFormData({ ...taskFormData, estimated_hours: e.target.value })} className="input" placeholder="0" />
+                  <label htmlFor="task-estimated_hours" style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--ink-secondary)', marginBottom: '6px' }}>Estimated hours</label>
+                  <input id="task-estimated_hours" type="number" min="0" step="0.5" value={taskFormData.estimated_hours} onChange={e => setTaskFormData({ ...taskFormData, estimated_hours: e.target.value })} className="input" placeholder="0" />
                 </div>
                 <div>
-                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--ink-secondary)', marginBottom: '6px' }}>Deadline</label>
-                  <input type="date" value={taskFormData.deadline} onChange={e => setTaskFormData({ ...taskFormData, deadline: e.target.value })} className="input" />
+                  <label htmlFor="task-deadline" style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--ink-secondary)', marginBottom: '6px' }}>Deadline</label>
+                  <input id="task-deadline" type="date" value={taskFormData.deadline} onChange={e => setTaskFormData({ ...taskFormData, deadline: e.target.value })} className="input" />
                 </div>
               </div>
 
@@ -573,7 +568,7 @@ const ProjectDetail = () => {
                     ))}
                   </div>
                 )}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr auto auto', gap: '8px', alignItems: 'center' }}>
+                <div className="task-skill-fields">
                   <input type="text" value={skillInput} onChange={e => setSkillInput(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleAddSkill(); } }} className="input" placeholder="Skill name" />
                   <select value={skillProficiency} onChange={e => setSkillProficiency(e.target.value)} className="input">
                     <option value="BEGINNER">Beginner</option>
@@ -592,15 +587,14 @@ const ProjectDetail = () => {
 
               {/* Actions */}
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', paddingTop: '6px', borderTop: '1px solid var(--border)' }}>
-                <button type="button" onClick={() => setShowTaskModal(false)} className="btn btn-secondary">Cancel</button>
-                <button type="submit" className="btn btn-primary" style={{ minWidth: '120px' }}>
+                <button type="button" disabled={taskSaving} onClick={() => setShowTaskModal(false)} className="btn btn-secondary">Cancel</button>
+                <button type="submit" disabled={taskSaving} aria-busy={taskSaving} className="btn btn-primary" style={{ minWidth: '120px' }}>
                   <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
-                  Create Task
+                  {taskSaving ? 'Creating task…' : 'Create Task'}
                 </button>
               </div>
             </form>
-          </div>
-        </div>
+        </Modal>
       )}
     </div>
   );

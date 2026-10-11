@@ -1,8 +1,11 @@
+import { Modal, StatusBadge } from './WorkspaceUI';
+import { useFeedback } from './Feedback';
 import { useState, useEffect } from 'react';
 import api from '../services/api';
 import { Link } from 'react-router-dom';
 
 export const TaskCard = ({ task, onUpdate, userRole, projectMembers }) => {
+  const notify = useFeedback();
   const [skills, setSkills] = useState([]);
   const [showSkills, setShowSkills] = useState(false);
   const [editingSkills, setEditingSkills] = useState(false);
@@ -43,7 +46,8 @@ export const TaskCard = ({ task, onUpdate, userRole, projectMembers }) => {
       const response = await api.get(`/skills/tasks/${task.id}/matches`);
       setRecommendations(Array.isArray(response.data) ? response.data : []);
       setShowRecommendations(true);
-    } catch {
+    } catch (err) {
+      notify(err.message || 'Unable to load assignment recommendations.', 'error');
       setRecommendations([]);
     } finally {
       setLoadingRecommendations(false);
@@ -61,14 +65,14 @@ export const TaskCard = ({ task, onUpdate, userRole, projectMembers }) => {
       });
       setNewSkill({ skill_name: '', required_proficiency: 'INTERMEDIATE', is_mandatory: true });
       fetchSkills();
-    } catch { /* silent */ }
+    } catch (err) { notify(err.message || 'Unable to update this task.', 'error'); }
   };
 
   const handleRemoveSkill = async (skillName) => {
     try {
       await api.delete(`/skills/tasks/${task.id}/${skillName}`);
       fetchSkills();
-    } catch { /* silent */ }
+    } catch (err) { notify(err.message || 'Unable to update this task.', 'error'); }
   };
 
   // ── Assignment ─────────────────────────────────────────────────────────────
@@ -79,7 +83,7 @@ export const TaskCard = ({ task, onUpdate, userRole, projectMembers }) => {
       setShowRecommendations(false);
       onUpdate?.();
     } catch (err) {
-      console.error('Assign failed:', err);
+      notify(err.message || 'Unable to assign this task.', 'error');
     }
   };
 
@@ -95,6 +99,7 @@ export const TaskCard = ({ task, onUpdate, userRole, projectMembers }) => {
       if (assignForm.priority !== task.priority) updates.priority = assignForm.priority;
       if (Object.keys(updates).length) await api.patch(`/tasks/${task.id}`, updates);
       setShowAssign(false);
+      notify('Task assignment saved.');
       onUpdate?.();
     } catch (err) {
       setAssignError(err.response?.data?.message || err.message || 'Assignment failed');
@@ -107,7 +112,7 @@ export const TaskCard = ({ task, onUpdate, userRole, projectMembers }) => {
     try {
       await api.delete(`/tasks/${task.id}/assign/${userId}`);
       onUpdate?.();
-    } catch { /* silent */ }
+    } catch (err) { notify(err.message || 'Unable to update this task.', 'error'); }
   };
 
   // ── Task edit ──────────────────────────────────────────────────────────────
@@ -134,6 +139,7 @@ export const TaskCard = ({ task, onUpdate, userRole, projectMembers }) => {
         deadline: editForm.deadline || null,
       });
       setShowEdit(false);
+      notify('Task updated successfully.');
       onUpdate?.();
     } catch (error) {
       setTaskError(error.response?.data?.message || error.message || 'Task could not be updated.');
@@ -143,7 +149,7 @@ export const TaskCard = ({ task, onUpdate, userRole, projectMembers }) => {
   };
 
   // ── Badge helpers ──────────────────────────────────────────────────────────
-  const statusClass = { TODO: 'badge-gray', IN_PROGRESS: 'badge-info', BLOCKED: 'badge-danger', COMPLETED: 'badge-success' };
+  const statusClass = { TODO: 'badge-gray', IN_PROGRESS: 'badge-violet', BLOCKED: 'badge-warning', COMPLETED: 'badge-success' };
   const priorityClass = { LOW: 'badge-gray', MEDIUM: 'badge-info', HIGH: 'badge-warning', CRITICAL: 'badge-danger' };
 
   const canEdit  = userRole === 'OWNER' || userRole === 'DEVELOPER';
@@ -153,7 +159,7 @@ export const TaskCard = ({ task, onUpdate, userRole, projectMembers }) => {
 
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
-    <div className="project-task-card">
+    <div className="project-task-card" data-status={task.status}>
       <p className="task-reference"><span>✣</span> OPS-{task.id}</p>
       {task.github_last_activity_id && <Link className="block mb-2 text-xs text-primary-600" to={`/projects/${task.project_id}?tab=repository`}>Updated automatically from GitHub ↗</Link>}
 
@@ -161,8 +167,8 @@ export const TaskCard = ({ task, onUpdate, userRole, projectMembers }) => {
       <div className="mb-2 flex flex-col justify-between gap-2 sm:flex-row sm:items-start">
         <h3 className="font-medium text-gray-900">{task.title}</h3>
         <div className="flex flex-wrap gap-1.5">
-          <span className={priorityClass[task.priority] || 'badge-gray'}>{task.priority}</span>
-          <span className={statusClass[task.status] || 'badge-gray'}>{task.status}</span>
+          <span className={`badge ${priorityClass[task.priority] || 'badge-gray'}`}>{task.priority}</span>
+          <StatusBadge status={task.status} />
           {canEdit && (
             <button type="button" onClick={openTaskEditor} className="btn-secondary text-xs">Edit</button>
           )}
@@ -212,7 +218,7 @@ export const TaskCard = ({ task, onUpdate, userRole, projectMembers }) => {
               </option>
             ))}
           </select>
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             <div>
               <label className="text-xs text-slate-600">Priority</label>
               <select className="input text-xs mt-0.5" value={assignForm.priority}
@@ -297,9 +303,8 @@ export const TaskCard = ({ task, onUpdate, userRole, projectMembers }) => {
 
       {/* Edit modal */}
       {showEdit && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-sky-100/70 p-4 backdrop-blur-sm">
-          <form onSubmit={saveTask} className="w-full max-w-xl space-y-4 rounded-xl bg-white p-6 shadow-xl">
-            <h3 className="text-lg font-semibold text-slate-800">Edit work item</h3>
+        <Modal title="Edit work item" onClose={() => setShowEdit(false)} busy={savingTask}>
+          <form onSubmit={saveTask} className="space-y-4">
             {taskError && <p role="alert" className="rounded-lg bg-rose-50 p-3 text-sm text-rose-700">{taskError}</p>}
             <label className="block text-sm font-medium text-slate-700">Title
               <input required maxLength={255} className="input mt-1" value={editForm.title || ''}
@@ -314,7 +319,7 @@ export const TaskCard = ({ task, onUpdate, userRole, projectMembers }) => {
                 onChange={e => setEditForm(f => ({ ...f, acceptance_criteria: e.target.value }))}
                 placeholder="Definition of done…" />
             </label>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <label className="text-sm font-medium text-slate-700">Status
                 <select className="input mt-1" value={editForm.status}
                   onChange={e => setEditForm(f => ({ ...f, status: e.target.value }))}>
@@ -344,28 +349,26 @@ export const TaskCard = ({ task, onUpdate, userRole, projectMembers }) => {
               </label>
             </div>
             <div className="flex justify-end gap-2">
-              <button type="button" className="btn-secondary" onClick={() => setShowEdit(false)}>Cancel</button>
+              <button type="button" className="btn-secondary" disabled={savingTask} onClick={() => setShowEdit(false)}>Cancel</button>
               <button type="submit" className="btn-primary" aria-busy={savingTask} disabled={savingTask}>
                 {savingTask ? 'Saving…' : 'Save changes'}
               </button>
             </div>
           </form>
-        </div>
+        </Modal>
       )}
 
       {/* Skill-match recommendations modal */}
       {showRecommendations && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-xl max-w-2xl w-full max-h-[80vh] overflow-y-auto shadow-2xl">
-            <div className="p-6">
+        <Modal title="Assignment Recommendations" onClose={() => setShowRecommendations(false)}>
               <div className="flex justify-between items-center mb-4">
                 <div>
-                  <h3 className="text-xl font-bold">Assignment Recommendations</h3>
+
                   <p className="text-sm text-slate-500 mt-0.5">
                     Ranked by skills, workload, and deadline feasibility. Review before applying.
                   </p>
                 </div>
-                <button onClick={() => setShowRecommendations(false)} className="text-gray-400 hover:text-gray-600 text-xl">✕</button>
+
               </div>
 
               {recommendations.length > 0 ? (
@@ -391,7 +394,7 @@ export const TaskCard = ({ task, onUpdate, userRole, projectMembers }) => {
                         <p className="text-sm text-slate-600 mb-2 italic">{rec.explanation}</p>
                       )}
 
-                      <div className="grid grid-cols-3 gap-2 text-xs text-slate-600 mb-2">
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs text-slate-600 mb-2">
                         <span>Skill match: <strong>{rec.skill_match_score}%</strong></span>
                         <span>Available: <strong>{rec.available_hours}h</strong></span>
                         <span>Workload: <strong>{rec.workload_score ?? '—'}</strong></span>
@@ -423,9 +426,7 @@ export const TaskCard = ({ task, onUpdate, userRole, projectMembers }) => {
               ) : (
                 <p className="text-center py-8 text-slate-400">No matching team members found.</p>
               )}
-            </div>
-          </div>
-        </div>
+        </Modal>
       )}
     </div>
   );

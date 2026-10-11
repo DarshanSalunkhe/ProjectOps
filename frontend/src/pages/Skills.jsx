@@ -1,3 +1,4 @@
+import { CollectionSkeleton, Modal } from '../components/WorkspaceUI';
 import { useState, useEffect } from 'react';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
@@ -92,16 +93,7 @@ const Skills = () => {
     return classes[level] || 'badge-gray';
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading skills...</p>
-        </div>
-      </div>
-    );
-  }
+  if (loading) return <CollectionSkeleton label="Loading skills…" />;
 
   return (
     <div className="page-enter">
@@ -219,7 +211,7 @@ const Skills = () => {
       {activeTab === 'workspace' && (
         <div>
           <p className="mb-4 text-sm text-slate-600">{workspaceSkills.length} unique skills across the workspace</p>
-          
+
           {workspaceSkills.length > 0 ? (
             <div className="space-y-3">
               {workspaceSkills.map((skill) => (
@@ -262,10 +254,10 @@ const Skills = () => {
 
               {skillGaps.gaps.map((gap, idx) => (
                 <div key={idx} className={`card p-4 border-l-4 ${
-                  gap.severity === 'CRITICAL' || gap.severity === 'HIGH' 
-                    ? 'border-red-500' 
-                    : gap.severity === 'MEDIUM' 
-                    ? 'border-yellow-500' 
+                  gap.severity === 'CRITICAL' || gap.severity === 'HIGH'
+                    ? 'border-red-500'
+                    : gap.severity === 'MEDIUM'
+                    ? 'border-yellow-500'
                     : 'border-slate-300'
                 }`}>
                   <div className="flex justify-between items-start">
@@ -310,9 +302,8 @@ const Skills = () => {
 
       {/* Add Skill Modal */}
       {showAddModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4">
-          <div className="w-full max-w-md rounded-xl border border-slate-200 bg-white p-6 shadow-xl">
-            <h2 className="text-xl font-semibold mb-4">Add Skill</h2>
+        <Modal title="Add Skill" onClose={() => setShowAddModal(false)}>
+
             <form onSubmit={handleAddSkill}>
               <div className="mb-4">
                 <label className="block text-sm font-medium text-slate-700 mb-2">
@@ -368,8 +359,7 @@ const Skills = () => {
                 </button>
               </div>
             </form>
-          </div>
-        </div>
+        </Modal>
       )}
     </div>
   );

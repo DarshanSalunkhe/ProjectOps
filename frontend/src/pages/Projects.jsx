@@ -1,5 +1,7 @@
-import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Modal, CollectionSkeleton } from '../components/WorkspaceUI';
+import { useFeedback } from '../components/Feedback';
+import { useState, useEffect, useRef } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
 import { projectService } from '../services/projectService';
 import { useAuth } from '../context/AuthContext';
 import { canCreateProject } from '../utils/permissions';
@@ -24,9 +26,12 @@ const StatusPill = ({ status }) => {
 
 const Projects = () => {
   const { user } = useAuth();
+  const notify = useFeedback();
+  const savingRef = useRef(false);
+  const [searchParams, setSearchParams] = useSearchParams();
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showCreateModal, setShowCreateModal] = useState(searchParams.get('create') === '1' && canCreateProject(user));
   const [searchQuery, setSearchQuery] = useState('');
   const [filterArchived, setFilterArchived] = useState('active');
   const [formData, setFormData] = useState({ name: '', description: '', goal: '', status: 'PLANNING', start_date: '', deadline: '' });
@@ -35,11 +40,13 @@ const Projects = () => {
   const [error, setError] = useState('');
 
   useEffect(() => { fetchProjects(); }, []);
+  const closeCreate = () => { setShowCreateModal(false); setFormError(''); if (searchParams.has('create')) { const next = new URLSearchParams(searchParams); next.delete('create'); setSearchParams(next, { replace: true }); } };
 
   const fetchProjects = async () => {
     try {
       const data = await projectService.getAll();
       setProjects(Array.isArray(data) ? data : []);
+      setError('');
     } catch {
       setError('Failed to load projects');
     } finally {
@@ -49,20 +56,25 @@ const Projects = () => {
 
   const handleCreateProject = async (e) => {
     e.preventDefault();
+    if (savingRef.current) return;
+    savingRef.current = true;
     setFormError(''); setFormSaving(true);
     try {
       await projectService.create(formData);
-      setShowCreateModal(false);
+      closeCreate();
+      notify('Project created. Your workspace is ready.');
+      window.dispatchEvent(new Event('projectops:projects-changed'));
       setFormData({ name: '', description: '', goal: '', status: 'PLANNING', start_date: '', deadline: '' });
       fetchProjects();
     } catch (err) {
       setFormError(err.message || 'Failed to create project');
     } finally {
+      savingRef.current = false;
       setFormSaving(false);
     }
   };
 
-  const calculateProgress = (p) => p.task_count === 0 ? 0 : Math.round((p.completed_task_count / p.task_count) * 100);
+  const calculateProgress = (p) => Number(p.task_count) > 0 ? Math.min(100, Math.round(Number(p.completed_task_count || 0) / Number(p.task_count) * 100)) : 0;
 
   const filteredProjects = (projects || []).filter(p => {
     const matchSearch = p.name.toLowerCase().includes(searchQuery.trim().toLowerCase());
@@ -73,7 +85,7 @@ const Projects = () => {
   const handleRestoreProject = async (projectId, e) => {
     e.preventDefault(); e.stopPropagation();
     if (!window.confirm('Restore this project?')) return;
-    try { await projectService.restore(projectId); fetchProjects(); } catch {}
+    try { await projectService.restore(projectId); notify('Project restored.'); fetchProjects(); } catch (err) { notify(err.message || 'Unable to restore project.', 'error'); }
   };
 
   const tabStyle = (active) => ({
@@ -89,7 +101,7 @@ const Projects = () => {
       {/* Header */}
       <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'flex-end', gap: '16px', marginBottom: '24px' }}>
         <div>
-          <p style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.12em', color: 'var(--violet)', marginBottom: '5px' }}>Portfolio</p>
+          <p style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.12em', color: 'var(--accent-text)', marginBottom: '5px' }}>Portfolio</p>
           <h1 style={{ fontSize: '26px', fontWeight: 800, letterSpacing: '-0.04em', color: 'var(--ink)', marginBottom: '4px' }}>Projects</h1>
           <p style={{ fontSize: '13px', color: 'var(--ink-secondary)' }}>Keep every initiative moving with a clear view of progress.</p>
         </div>
@@ -106,7 +118,7 @@ const Projects = () => {
       {/* Filters */}
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center', marginBottom: '18px' }}>
         {['active', 'archived', 'all'].map(f => (
-          <button key={f} onClick={() => setFilterArchived(f)} style={tabStyle(filterArchived === f)}>
+          <button key={f} aria-pressed={filterArchived === f} onClick={() => setFilterArchived(f)} style={tabStyle(filterArchived === f)}>
             {f.charAt(0).toUpperCase() + f.slice(1)}
           </button>
         ))}
@@ -126,20 +138,15 @@ const Projects = () => {
 
       {/* Grid */}
       {loading ? (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(280px,1fr))', gap: '16px' }}>
-          {[...Array(3)].map((_, i) => (
-            <div key={i} className="card skeleton" style={{ height: '180px' }} />
-          ))}
-        </div>
+        <CollectionSkeleton label="Loading projects…" />
       ) : filteredProjects.length > 0 ? (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(280px,1fr))', gap: '16px' }}>
+        <div className="collection-grid">
           {filteredProjects.map(project => {
             const progress = calculateProgress(project);
             const isOverdue = project.deadline && !project.archived && project.status !== 'COMPLETED' && new Date(project.deadline) < new Date();
             return (
-              <Link
+              <article
                 key={project.id}
-                to={`/projects/${project.id}`}
                 className="card card-interactive"
                 style={{ display: 'flex', flexDirection: 'column', gap: '0', textDecoration: 'none', padding: '0', overflow: 'hidden' }}
               >
@@ -149,15 +156,15 @@ const Projects = () => {
                 <div style={{ padding: '18px 18px 16px', flex: 1, display: 'flex', flexDirection: 'column', gap: '12px' }}>
                   {/* Title row */}
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '10px' }}>
-                    <h3 style={{ fontSize: '14px', fontWeight: 700, color: 'var(--ink)', letterSpacing: '-0.01em', lineHeight: 1.3, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
-                      {project.name}
+                    <h3 className="mobile-readable" style={{ fontSize: '14px', fontWeight: 700, color: 'var(--ink)', letterSpacing: '-0.01em', lineHeight: 1.3, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
+                      <Link className="project-title-link" to={`/projects/${project.id}`}>{project.name}</Link>
                     </h3>
                     <StatusPill status={project.status} />
                   </div>
 
                   {/* Description */}
                   {project.description && (
-                    <p style={{ fontSize: '12px', color: 'var(--ink-secondary)', lineHeight: 1.55, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', margin: '0' }}>
+                    <p className="mobile-readable" style={{ fontSize: '12px', color: 'var(--ink-secondary)', lineHeight: 1.55, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', margin: '0' }}>
                       {project.description}
                     </p>
                   )}
@@ -170,7 +177,7 @@ const Projects = () => {
                       </span>
                       <span style={{ fontSize: '11px', fontWeight: 700, color: progress === 100 ? '#0D9488' : 'var(--ink-secondary)' }}>{progress}%</span>
                     </div>
-                    <div className="progress-track">
+                    <div className="progress-track" role="progressbar" aria-label={`${project.name} completion`} aria-valuenow={progress} aria-valuemin={0} aria-valuemax={100}>
                       <div style={{ width: `${progress}%` }} />
                     </div>
                   </div>
@@ -192,7 +199,7 @@ const Projects = () => {
                     <span style={{ fontSize: '11px', color: 'var(--ink-muted)' }}>{project.created_by_name}</span>
                   </div>
                 </div>
-              </Link>
+              </article>
             );
           })}
         </div>
@@ -218,11 +225,8 @@ const Projects = () => {
 
       {/* Create Project Modal */}
       {showCreateModal && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px', zIndex: 50 }}>
-          <div className="card" style={{ maxWidth: '560px', width: '100%', maxHeight: '90vh', overflowY: 'auto', borderRadius: '16px', padding: '28px', animation: 'slideUp 0.25s ease-out' }}>
-            <h2 style={{ fontSize: '18px', fontWeight: 800, letterSpacing: '-0.02em', marginBottom: '20px' }}>Create New Project</h2>
-
-            {formError && <div className="error-state" style={{ marginBottom: '16px' }}>{formError}</div>}
+        <Modal title="Create new project" onClose={closeCreate} busy={formSaving}>
+            {formError && <div role="alert" className="error-state" style={{ marginBottom: '16px' }}>{formError}</div>}
 
             <form onSubmit={handleCreateProject} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               {[
@@ -251,7 +255,7 @@ const Projects = () => {
                 </select>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+              <div className="form-columns">
                 <div>
                   <label htmlFor="start_date" style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--ink-secondary)', marginBottom: '6px' }}>Start date</label>
                   <input type="date" id="start_date" name="start_date" value={formData.start_date} onChange={e => setFormData({ ...formData, start_date: e.target.value })} className="input" />
@@ -263,14 +267,13 @@ const Projects = () => {
               </div>
 
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', paddingTop: '6px' }}>
-                <button type="button" onClick={() => { setShowCreateModal(false); setFormError(''); }} className="btn btn-secondary">Cancel</button>
+                <button type="button" disabled={formSaving} onClick={closeCreate} className="btn btn-secondary">Cancel</button>
                 <button type="submit" disabled={formSaving} aria-busy={formSaving} className="btn btn-primary" style={{ minWidth: '130px' }}>
-                  {!formSaving && 'Create Project'}
+                  {formSaving ? 'Creating project…' : 'Create Project'}
                 </button>
               </div>
             </form>
-          </div>
-        </div>
+        </Modal>
       )}
     </div>
   );

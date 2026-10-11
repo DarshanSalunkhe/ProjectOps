@@ -1,5 +1,8 @@
+import { lazy, Suspense } from 'react';
+import { LoadingState } from './components/WorkspaceUI';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
+import { FeedbackProvider } from './components/Feedback';
 import PrivateRoute from './components/PrivateRoute';
 import MainLayout from './layouts/MainLayout';
 import AuthLayout from './layouts/AuthLayout';
@@ -14,23 +17,24 @@ import GoogleCallback from './pages/auth/GoogleCallback';
 // Main pages
 import Dashboard from './pages/Dashboard';
 import Projects from './pages/Projects';
-import ProjectDetail from './pages/ProjectDetail';
-import ProjectMembers from './pages/ProjectMembers';
+const ProjectDetail = lazy(() => import('./pages/ProjectDetail'));
+const ProjectMembers = lazy(() => import('./pages/ProjectMembers'));
 import InvitationPage from './pages/InvitationPage';
 import Tasks from './pages/Tasks';
 import Team from './pages/Team';
-import Skills from './pages/Skills';
+const Skills = lazy(() => import('./pages/Skills'));
 import Risks from './pages/Risks';
-import AIPlanner from './pages/AIPlanner';
+const AIPlanner = lazy(() => import('./pages/AIPlanner'));
 import Settings from './pages/Settings';
-import Profile from './pages/Profile';
-import AdminUsers from './pages/AdminUsers';
+const Profile = lazy(() => import('./pages/Profile'));
+const AdminUsers = lazy(() => import('./pages/AdminUsers'));
 
 function App() {
   return (
     <AuthProvider>
+      <FeedbackProvider>
       <Router>
-        <Routes>
+        <Suspense fallback={<LoadingState label="Opening workspace…" />}><Routes>
           {/* Auth routes */}
           <Route element={<AuthLayout />}>
             <Route path="/login" element={<Login />} />
@@ -68,8 +72,9 @@ function App() {
 
           {/* Fallback */}
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
-        </Routes>
+        </Routes></Suspense>
       </Router>
+      </FeedbackProvider>
     </AuthProvider>
   );
 }

@@ -1,3 +1,4 @@
+import { CollectionSkeleton } from '../components/WorkspaceUI';
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { authService } from '../services/authService';
@@ -109,16 +110,7 @@ const Profile = () => {
     return colors[status] || 'bg-gray-500';
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading profile...</p>
-        </div>
-      </div>
-    );
-  }
+  if (loading) return <CollectionSkeleton label="Loading profile…" />;
 
   return (
     <div className="page-enter max-w-5xl">
@@ -372,7 +364,7 @@ const Profile = () => {
         <div className="card">
           <h2 className="text-xl font-semibold mb-6 pb-3 border-b border-gray-200">Account Information</h2>
           
-          <div className="grid grid-cols-2 gap-6 text-sm">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 text-sm">
             <div>
               <span className="text-gray-600">Account Email:</span>
               <p className="font-medium text-gray-900">{user?.email}</p>
