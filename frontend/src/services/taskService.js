@@ -1,5 +1,12 @@
 import api from './api';
 
+export const normalizeTaskPayload = (projectId, taskData) => {
+  const payload = { ...taskData, project_id: projectId };
+  if (payload.estimated_hours === '') delete payload.estimated_hours;
+  if (payload.deadline === '') delete payload.deadline;
+  return payload;
+};
+
 export const taskService = {
   async getByProject(projectId) {
     const response = await api.get(`/projects/${projectId}/tasks`);
@@ -12,7 +19,7 @@ export const taskService = {
   },
 
   async create(projectId, taskData) {
-    const response = await api.post(`/projects/${projectId}/tasks`, taskData);
+    const response = await api.post(`/projects/${projectId}/tasks`, normalizeTaskPayload(projectId, taskData));
     return response.data;
   },
 

@@ -1,10 +1,11 @@
 import { query } from '../config/database.js';
 
 export const taskRepository = {
-  async create(taskData, userId) {
+  async create(taskData, userId, client) {
     const { project_id, title, description, status, priority, estimated_hours, deadline } = taskData;
     
-    const result = await query(
+    const execute = client ? client.query.bind(client) : query;
+    const result = await execute(
       `INSERT INTO tasks (project_id, title, description, status, priority, estimated_hours, deadline, created_by) 
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8) 
        RETURNING *`,

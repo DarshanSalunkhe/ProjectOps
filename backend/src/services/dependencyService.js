@@ -64,10 +64,14 @@ export const dependencyService = {
     return dependentTasks;
   },
 
-  async deleteDependency(dependencyId) {
+  async deleteDependency(dependencyId, taskId) {
     const dependency = await dependencyRepository.findById(dependencyId);
     if (!dependency) {
       throw new AppError('Dependency not found', 404);
+    }
+
+    if (taskId !== undefined && Number(dependency.task_id) !== Number(taskId)) {
+      throw new AppError('Dependency does not belong to this task', 404);
     }
 
     await dependencyRepository.delete(dependencyId);

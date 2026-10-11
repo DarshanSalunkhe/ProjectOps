@@ -1,0 +1,33 @@
+{
+  "id": "FEAT-002",
+  "type": "feat",
+  "description": "Phase B: GitHub Repository Integration. Display linked repository info, fetch recent commits/PRs via GitHub API, support task association. Backend proxies GitHub API to avoid CORS. No auto-task-completion from pushes. Independent of other features.",
+  "status": "pending",
+  "steps": [
+    "1. Create backend/src/services/githubService.js: implement getRepositoryInfo(repoUrl), getRecentCommits(repoUrl, limit=10), getRecentPullRequests(repoUrl, limit=10). Parse owner and repo name from URL. Use fetch or axios to call GitHub REST API v3. Handle authentication: if GITHUB_CLIENT_ID and GITHUB_CLIENT_SECRET in env, use OAuth app token; otherwise, make unauthenticated requests (60 req/hour limit). Return structured data or null/error on failure.",
+    "2. Create backend/src/controllers/githubController.js: implement GET /api/projects/:projectId/github/info (returns repo info), GET /api/projects/:projectId/github/commits, GET /api/projects/:projectId/github/pulls. Each endpoint: get project.github_repo_url from database, validate user is project member (requireProjectMember middleware), call githubService, return results.",
+    "3. Create backend/src/routes/githubRoutes.js: define routes, apply requireAuth and requireProjectMember middleware. Register in backend/src/routes/index.js as '/api/projects/:projectId/github'.",
+    "4. Update frontend/src/components/ProjectTabs.jsx RepositoryTab component: if project.github_repo_url exists, fetch GET /api/projects/:projectId/github/info and display repository name, owner, description, stars, last push date, 'Open on GitHub' link. Below that, fetch and display recent commits (author, message, date, sha short hash) and recent pull requests (title, state, author, created date).",
+    "5. Add loading states and error handling in RepositoryTab: if GitHub API fails (rate limit, auth missing, repo private), show friendly error message with explanation. If github_repo_url not set, show 'No repository linked' message with 'Add Repository' button (existing edit flow).",
+    "6. Add optional task association: in frontend/src/components/TaskCard.jsx or task detail view, add 'Link GitHub Issue/PR' button. Opens modal with URL input. Save association in task metadata or new task_github_links table (add migration 020 if using table). Display linked issues/PRs on task detail. Association is manual, no automation in this feature."
+  ],
+  "acceptance_criteria": [
+    "githubService.js successfully parses repo URL, calls GitHub API, handles auth and errors",
+    "Backend GitHub endpoints protected by requireProjectMember middleware",
+    "RepositoryTab displays repo name, owner, description, recent commits, and recent pull requests when github_repo_url is set",
+    "RepositoryTab shows friendly error if GitHub API fails or repo is private",
+    "Task association with GitHub issues/PRs is manual and optional",
+    "No automated task completion from GitHub push events"
+  ],
+  "verification": [
+    "Run npm run audit:unit to verify backend tests pass",
+    "Start dev servers with npm run dev",
+    "In ProjectDetail Repository tab, verify if project has github_repo_url set, it attempts to fetch info",
+    "Test with public repo: set github_repo_url to 'https://github.com/microsoft/vscode', verify repo info and recent commits/PRs display",
+    "Test with invalid URL: set github_repo_url to 'invalid', verify error message shown",
+    "If GITHUB_CLIENT_ID not in .env, verify unauthenticated API calls work (60/hour limit message if rate limited)",
+    "Manually link a GitHub issue to a task, verify association saved and displayed on task detail"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

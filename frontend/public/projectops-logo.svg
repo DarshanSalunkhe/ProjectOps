@@ -1,0 +1,58 @@
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  width="580"
+  height="140"
+  viewBox="0 0 580 140"
+  role="img"
+  aria-labelledby="title"
+>
+  <title id="title">ProjectOps</title>
+  <defs>
+    <linearGradient id="brand" x1="0%" y1="0%" x2="75%" y2="100%">
+      <stop offset="0%" stop-color="#159BFF"/>
+      <stop offset="45%" stop-color="#00D7E8"/>
+      <stop offset="100%" stop-color="#883BFF"/>
+    </linearGradient>
+    <linearGradient id="ops" x1="0%" y1="0%" x2="20%" y2="100%">
+      <stop offset="0%" stop-color="#00D7E8"/>
+      <stop offset="50%" stop-color="#2484FF"/>
+      <stop offset="100%" stop-color="#883BFF"/>
+    </linearGradient>
+  </defs>
+  <!-- Circuit-inspired P -->
+  <g transform="translate(12 10)">
+    <g
+      fill="none"
+      stroke="url(#brand)"
+      stroke-width="8"
+      stroke-linecap="butt"
+      stroke-linejoin="round"
+    >
+      <!-- Outer P -->
+      <path d="M12 73 V12 H58 C84 12 103 28 107 49"/>
+      <path d="M107 70 C102 91 84 100 59 100 H49"/>
+      <!-- Interior circuit paths -->
+      <path d="M12 88 C12 64 43 80 43 51 C43 44 47 39 51 37"/>
+      <path d="M38 89 C38 65 73 81 73 52 C73 45 70 40 67 38"/>
+      <!-- Lower terminals -->
+      <path d="M12 110 V120"/>
+      <path d="M38 110 V128"/>
+    </g>
+    <!-- Flat network nodes -->
+    <circle cx="12" cy="12" r="8" fill="#159BFF"/>
+    <circle cx="59" cy="34" r="8" fill="#8050F5"/>
+    <circle cx="108" cy="59" r="8" fill="#8050F5"/>
+    <circle cx="12" cy="100" r="8" fill="#8050F5"/>
+    <circle cx="38" cy="100" r="8" fill="#8050F5"/>
+    <rect x="5" y="120" width="14" height="10" rx="3" fill="#159BFF"/>
+  </g>
+  <!-- Wordmark -->
+  <g
+    font-family="Inter, Arial, sans-serif"
+    font-size="64"
+    letter-spacing="-2"
+  >
+    <text x="153" y="94" fill="#F5F7FC" font-weight="500">Project</text>
+    <text x="363" y="94" fill="url(#ops)" font-weight="700">Ops</text>
+  </g>
+</svg>

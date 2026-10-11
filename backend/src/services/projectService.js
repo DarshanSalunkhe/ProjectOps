@@ -66,6 +66,34 @@ export const projectService = {
     return { message: 'Project deleted successfully' };
   },
 
+  async archiveProject(id) {
+    const existingProject = await projectRepository.findById(id);
+    if (!existingProject) {
+      throw new AppError('Project not found', 404);
+    }
+
+    const project = await projectRepository.update(id, {
+      archived: true,
+      archived_at: new Date()
+    });
+
+    return project;
+  },
+
+  async restoreProject(id) {
+    const existingProject = await projectRepository.findById(id);
+    if (!existingProject) {
+      throw new AppError('Project not found', 404);
+    }
+
+    const project = await projectRepository.update(id, {
+      archived: false,
+      archived_at: null
+    });
+
+    return project;
+  },
+
   async getStatistics() {
     const stats = await projectRepository.getStatistics();
     return stats;

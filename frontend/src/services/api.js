@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const API_URL = import.meta.env.VITE_API_URL || '/api';
 
 const api = axios.create({
   baseURL: API_URL,
@@ -31,7 +31,11 @@ api.interceptors.response.use(
   (error) => {
     if (error.response) {
       // Handle specific status codes
-      if (error.response.status === 401) {
+      const requestToken = error.config?.headers?.Authorization;
+      const currentToken = localStorage.getItem('token');
+      if (error.response.status === 401 && requestToken &&
+          requestToken === `Bearer ${currentToken}` &&
+          !/^\/?auth\/(login|register)(?:\?|$)/.test(error.config?.url || '')) {
         localStorage.removeItem('token');
         window.location.href = '/login';
       }
@@ -43,7 +47,9 @@ api.interceptors.response.use(
     // Network error or other issues
     return Promise.reject({
       success: false,
-      message: 'Network error. Please check your connection.'
+      message: error.code === 'ECONNABORTED'
+        ? 'Sign in timed out. Please try again.'
+        : 'Unable to reach the server. Please check your connection and try again.'
     });
   }
 );

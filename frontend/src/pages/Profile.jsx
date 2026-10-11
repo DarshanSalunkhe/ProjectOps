@@ -414,14 +414,14 @@ const Profile = () => {
               }
             }}
             className="btn-secondary"
-            disabled={saving}
+            aria-busy={saving} disabled={saving}
           >
             Reset Changes
           </button>
           <button
             type="submit"
             className="btn-primary"
-            disabled={saving}
+            aria-busy={saving} disabled={saving}
           >
             {saving ? 'Saving...' : 'Save Profile'}
           </button>

@@ -1,113 +1,180 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { StatusBadge } from '../components/WorkspaceUI';
 import api from '../services/api';
+
+const PRIORITY_CONFIG = {
+  LOW:      { bg: 'rgba(100,116,139,0.1)', color: '#64748B', border: 'rgba(100,116,139,0.25)' },
+  MEDIUM:   { bg: 'rgba(245,158,11,0.12)', color: '#D97706', border: 'rgba(245,158,11,0.3)' },
+  HIGH:     { bg: 'rgba(239,68,68,0.12)',  color: '#DC2626', border: 'rgba(239,68,68,0.3)' },
+  CRITICAL: { bg: 'rgba(124,58,237,0.12)', color: '#7C3AED', border: 'rgba(124,58,237,0.3)' },
+};
+
+const STATUS_CONFIG = {
+  TODO:        { bg: 'rgba(100,116,139,0.08)', color: '#64748B', border: 'rgba(100,116,139,0.2)' },
+  IN_PROGRESS: { bg: 'rgba(124,58,237,0.1)',   color: '#7C3AED', border: 'rgba(124,58,237,0.25)' },
+  BLOCKED:     { bg: 'rgba(239,68,68,0.1)',     color: '#DC2626', border: 'rgba(239,68,68,0.25)' },
+  COMPLETED:   { bg: 'rgba(20,184,166,0.1)',    color: '#0D9488', border: 'rgba(20,184,166,0.25)' },
+};
+
+const Pill = ({ label, cfg }) => (
+  <span style={{
+    display: 'inline-flex', alignItems: 'center', padding: '2px 8px',
+    borderRadius: '100px', fontSize: '10px', fontWeight: 700, whiteSpace: 'nowrap',
+    background: cfg?.bg || 'rgba(100,116,139,0.08)',
+    color: cfg?.color || '#64748B',
+    border: `1px solid ${cfg?.border || 'rgba(100,116,139,0.2)'}`,
+  }}>
+    {label?.replace(/_/g, ' ')}
+  </span>
+);
 
 const Tasks = () => {
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
+  const [view, setView] = useState('list');
+  const [statusFilter, setStatusFilter] = useState('');
+  const [priorityFilter, setPriorityFilter] = useState('');
+  const [selectedTask, setSelectedTask] = useState(null);
 
   useEffect(() => {
-    const fetchTasks = async () => {
-      try {
-        const response = await api.get('/tasks');
-        setTasks(response.data);
-      } catch (err) {
-        setError(err.message || 'Failed to load tasks');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchTasks();
+    api.get('/tasks').then(r => setTasks(r.data || [])).catch(e => setError(e.message || 'Failed to load tasks')).finally(() => setLoading(false));
   }, []);
 
-  const getStatusBadgeClass = (status) => {
-    const classes = {
-      TODO: 'badge-gray',
-      IN_PROGRESS: 'badge-info',
-      BLOCKED: 'badge-danger',
-      COMPLETED: 'badge-success'
-    };
-    return classes[status] || 'badge-gray';
-  };
-
-  const getPriorityBadgeClass = (priority) => {
-    const classes = {
-      LOW: 'badge-gray',
-      MEDIUM: 'badge-info',
-      HIGH: 'badge-warning',
-      CRITICAL: 'badge-danger'
-    };
-    return classes[priority] || 'badge-gray';
-  };
-
-  const filteredTasks = tasks.filter((task) =>
-    `${task.title} ${task.project_name || ''} ${task.status} ${task.priority}`
-      .toLowerCase()
-      .includes(searchQuery.trim().toLowerCase())
+  const filteredTasks = tasks.filter(t =>
+    (!statusFilter || t.status === statusFilter) &&
+    (!priorityFilter || t.priority === priorityFilter) &&
+    `${t.title} ${t.project_name || ''} ${t.status} ${t.priority}`.toLowerCase().includes(searchQuery.trim().toLowerCase())
   );
+
+  const selectStyle = { minHeight: '34px', padding: '4px 10px', fontSize: '12px', background: 'var(--bg-card)', border: '1px solid var(--border-strong)', borderRadius: '8px', color: 'var(--ink)', cursor: 'pointer' };
 
   return (
     <div className="page-enter">
-      <div className="mb-7">
-        <p className="mb-1 text-xs font-bold uppercase tracking-[0.16em] text-primary-700">Execution</p>
-        <h1 className="text-3xl font-bold tracking-tight text-slate-900">All Tasks</h1>
-        <p className="mt-1 text-sm text-slate-500">A consolidated view of work across your projects.</p>
+      {/* Header */}
+      <div style={{ marginBottom: '24px' }}>
+        <p style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.12em', color: 'var(--violet)', marginBottom: '5px' }}>Execution</p>
+        <h1 style={{ fontSize: '26px', fontWeight: 800, letterSpacing: '-0.04em', color: 'var(--ink)', marginBottom: '4px' }}>All Tasks</h1>
+        <p style={{ fontSize: '13px', color: 'var(--ink-secondary)' }}>A consolidated view of work across your projects.</p>
       </div>
 
-      {tasks.length > 0 && (
-        <div className="mb-5 flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
-          <p className="text-sm text-slate-500">{filteredTasks.length} of {tasks.length} tasks</p>
-          <input
-            type="search"
-            value={searchQuery}
-            onChange={(event) => setSearchQuery(event.target.value)}
-            placeholder="Search tasks or projects"
-            aria-label="Search tasks"
-            className="input w-full sm:max-w-xs"
-          />
+      {/* Toolbar */}
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center', marginBottom: '16px' }}>
+        <span style={{ fontSize: '12px', color: 'var(--ink-muted)', marginRight: '4px' }}>{filteredTasks.length} of {tasks.length} tasks</span>
+        <div style={{ flex: 1, minWidth: '180px', maxWidth: '300px', position: 'relative' }}>
+          <svg style={{ position: 'absolute', left: '9px', top: '50%', transform: 'translateY(-50%)', color: 'var(--ink-muted)' }} width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m16 16 4 4"/></svg>
+          <input type="search" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} placeholder="Search tasks or projects" aria-label="Search tasks" className="input" style={{ paddingLeft: '30px', minHeight: '34px', fontSize: '12px' }} />
+        </div>
+        <select style={selectStyle} aria-label="Filter by status" value={statusFilter} onChange={e => setStatusFilter(e.target.value)}>
+          <option value="">All statuses</option>
+          {['TODO','IN_PROGRESS','BLOCKED','COMPLETED'].map(s => <option key={s} value={s}>{s.replace(/_/g,' ')}</option>)}
+        </select>
+        <select style={selectStyle} aria-label="Filter by priority" value={priorityFilter} onChange={e => setPriorityFilter(e.target.value)}>
+          <option value="">All priorities</option>
+          {['LOW','MEDIUM','HIGH','CRITICAL'].map(s => <option key={s} value={s}>{s}</option>)}
+        </select>
+        <button className="btn btn-secondary" style={{ minHeight: '34px', fontSize: '12px', gap: '5px' }} onClick={() => setView(v => v === 'list' ? 'board' : 'list')}>
+          {view === 'list' ? (
+            <><svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>Board</>
+          ) : (
+            <><svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13"/><path d="M3 6h.01M3 12h.01M3 18h.01"/></svg>List</>
+          )}
+        </button>
+      </div>
+
+      {/* Task detail panel */}
+      {selectedTask && (
+        <div className="card" style={{ marginBottom: '16px', padding: '20px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', gap: '12px', marginBottom: '12px' }}>
+            <h2 style={{ fontSize: '16px', fontWeight: 700, color: 'var(--ink)' }}>{selectedTask.title}</h2>
+            <button className="btn btn-secondary" style={{ minHeight: '28px', padding: '3px 10px', fontSize: '11px', flexShrink: 0 }} onClick={() => setSelectedTask(null)}>Close</button>
+          </div>
+          <p style={{ fontSize: '13px', color: 'var(--ink-secondary)', marginBottom: '12px' }}>{selectedTask.description || 'No description provided.'}</p>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '10px' }}>
+            <StatusBadge status={selectedTask.status} />
+            <Pill label={selectedTask.priority} cfg={PRIORITY_CONFIG[selectedTask.priority]} />
+          </div>
+          <p style={{ fontSize: '12px', color: 'var(--ink-secondary)', marginBottom: '14px' }}>
+            Assigned to: {selectedTask.assigned_users?.map(u => u.name).join(', ') || 'Unassigned'}
+          </p>
+          <Link to={`/projects/${selectedTask.project_id}?tab=tasks`} className="btn btn-primary" style={{ display: 'inline-flex', gap: '6px', fontSize: '12px' }}>
+            Open project workspace →
+          </Link>
         </div>
       )}
 
-      {error && <div className="mb-5 rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</div>}
+      {error && <div className="error-state" style={{ marginBottom: '16px' }}>{error}</div>}
 
       {loading ? (
-        <div className="card flex min-h-48 items-center justify-center text-sm text-slate-500">Loading tasks...</div>
+        <div className="card" style={{ minHeight: '160px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ width: '28px', height: '28px', border: '3px solid rgba(124,58,237,0.15)', borderTopColor: 'var(--violet)', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+        </div>
+      ) : view === 'board' ? (
+        <div className="kanban-board">
+          {['TODO','IN_PROGRESS','BLOCKED','COMPLETED'].map(status => (
+            <section className="kanban-column" key={status}>
+              <h3>{status.replace(/_/g,' ')} <span>{filteredTasks.filter(t => t.status === status).length}</span></h3>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {filteredTasks.filter(t => t.status === status).map(task => (
+                  <button className="project-task-card" key={task.id} onClick={() => setSelectedTask(task)} style={{ width: '100%', textAlign: 'left' }}>
+                    <p style={{ fontSize: '10px', color: 'var(--ink-muted)', marginBottom: '5px' }}>{task.project_name}</p>
+                    <p style={{ fontSize: '12px', fontWeight: 600, color: 'var(--ink)', marginBottom: '8px' }}>{task.title}</p>
+                    <Pill label={task.priority} cfg={PRIORITY_CONFIG[task.priority]} />
+                    {task.deadline && <p style={{ marginTop: '7px', fontSize: '10px', color: 'var(--ink-muted)' }}>Due {new Date(task.deadline).toLocaleDateString()}</p>}
+                  </button>
+                ))}
+              </div>
+            </section>
+          ))}
+        </div>
       ) : filteredTasks.length > 0 ? (
-        <div className="space-y-3">
-          {filteredTasks.map((task) => (
-            <article key={task.id} className="card p-4 transition-all hover:border-blue-200 hover:shadow-md sm:p-5">
-              <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
-                <div className="min-w-0">
-                  <h2 className="break-words text-base font-semibold text-slate-900">{task.title}</h2>
-                  {task.description && <p className="mt-1 line-clamp-2 text-sm text-slate-500">{task.description}</p>}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          {filteredTasks.map(task => (
+            <article
+              key={task.id}
+              className="card"
+              style={{ padding: '14px 18px', cursor: 'pointer', transition: 'border-color 150ms, box-shadow 150ms', display: 'flex', flexDirection: 'column', gap: '0' }}
+              onClick={() => setSelectedTask(task)}
+              onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(124,58,237,0.3)'; e.currentTarget.style.boxShadow = '0 4px 12px rgba(124,58,237,0.08)'; }}
+              onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.boxShadow = 'var(--shadow-card)'; }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px' }}>
+                <div style={{ minWidth: 0, flex: 1 }}>
+                  <h2 style={{ fontSize: '14px', fontWeight: 600, color: 'var(--ink)', letterSpacing: '-0.01em', marginBottom: '3px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {task.title}
+                  </h2>
+                  {task.description && (
+                    <p style={{ fontSize: '12px', color: 'var(--ink-secondary)', overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 1, WebkitBoxOrient: 'vertical' }}>{task.description}</p>
+                  )}
                 </div>
-                <div className="flex flex-wrap gap-2">
-                  <span className={getPriorityBadgeClass(task.priority)}>{task.priority}</span>
-                  <span className={getStatusBadgeClass(task.status)}>{task.status?.replaceAll('_', ' ')}</span>
+                <div style={{ display: 'flex', gap: '5px', flexShrink: 0, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+                  <Pill label={task.priority} cfg={PRIORITY_CONFIG[task.priority]} />
+                  <Pill label={task.status?.replace(/_/g,' ')} cfg={STATUS_CONFIG[task.status]} />
                 </div>
               </div>
-              <div className="mt-4 flex flex-col gap-2 border-t border-slate-100 pt-3 text-xs text-slate-500 sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-6">
-                {task.project_name && <span><span className="font-semibold text-slate-700">Project</span> · {task.project_name}</span>}
-                {task.assigned_users?.length > 0 && <span><span className="font-semibold text-slate-700">Assigned to</span> · {task.assigned_users.map((assignedUser) => assignedUser.name).join(', ')}</span>}
-                {task.deadline && <span><span className="font-semibold text-slate-700">Due</span> · {new Date(task.deadline).toLocaleDateString()}</span>}
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '14px', marginTop: '10px', paddingTop: '8px', borderTop: '1px solid var(--border)', fontSize: '11px', color: 'var(--ink-muted)' }}>
+                {task.project_name && <span><b style={{ color: 'var(--ink-secondary)' }}>Project</b> · {task.project_name}</span>}
+                {task.assigned_users?.length > 0 && <span><b style={{ color: 'var(--ink-secondary)' }}>Assigned</b> · {task.assigned_users.map(u => u.name).join(', ')}</span>}
+                {task.deadline && (
+                  <span style={{ color: new Date(task.deadline) < new Date() ? '#DC2626' : 'var(--ink-muted)' }}>
+                    <b style={{ color: 'inherit' }}>Due</b> · {new Date(task.deadline).toLocaleDateString()}
+                  </span>
+                )}
               </div>
             </article>
           ))}
         </div>
       ) : (
-      <div className="card overflow-hidden">
-        <div className="mx-auto flex max-w-lg flex-col items-center py-10 text-center sm:py-14">
-          <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-50 text-primary-700">
-            <svg className="h-7 w-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13"/><path d="M3 6h.01M3 12h.01M3 18h.01"/></svg>
+        <div className="card" style={{ padding: '48px 24px', textAlign: 'center' }}>
+          <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'rgba(124,58,237,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 14px' }}>
+            <svg width="22" height="22" fill="none" stroke="var(--violet)" strokeWidth="1.5" viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13"/><path d="M3 6h.01M3 12h.01M3 18h.01"/></svg>
           </div>
-          <p className="text-lg font-bold text-slate-900">{searchQuery ? 'No matching tasks' : 'No tasks found'}</p>
-          <p className="mt-2 text-sm leading-6 text-slate-500">{searchQuery ? 'Try a different search term.' : 'Tasks from all projects will appear here. Open a project to create and organize its work.'}</p>
-          <Link to="/projects" className="btn-secondary mt-5">Browse projects</Link>
+          <p style={{ fontWeight: 700, fontSize: '15px', color: 'var(--ink)', marginBottom: '5px' }}>{searchQuery ? 'No matching tasks' : 'No tasks found'}</p>
+          <p style={{ fontSize: '12px', color: 'var(--ink-muted)', marginBottom: '18px' }}>{searchQuery ? 'Try a different search term.' : 'Tasks from all your projects will appear here.'}</p>
+          <Link to="/projects" className="btn btn-secondary" style={{ display: 'inline-flex', fontSize: '12px' }}>Browse projects</Link>
         </div>
-      </div>
       )}
     </div>
   );

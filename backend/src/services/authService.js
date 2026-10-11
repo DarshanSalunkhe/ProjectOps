@@ -207,8 +207,28 @@ export const authService = {
     }
   },
 
+  async changePassword(userId, currentPassword, newPassword) {
+    const userWithHash = await query('SELECT password_hash FROM users WHERE id = $1', [userId]);
+    if (!userWithHash.rows[0]) throw new AppError('User not found', 404);
+
+    const isValid = await bcrypt.compare(currentPassword, userWithHash.rows[0].password_hash);
+    if (!isValid) throw new AppError('Current password is incorrect', 400);
+
+    const newHash = await bcrypt.hash(newPassword, SALT_ROUNDS);
+    await query('UPDATE users SET password_hash = $1, updated_at = NOW() WHERE id = $2', [newHash, userId]);
+    return { message: 'Password changed successfully' };
+  },
+
   async getAllUsers() {
     return await userRepository.getAll();
+  },
+
+  /**
+   * Get workspace members - respects profile_visibility
+   * Public profiles visible to all; private profiles hidden unless it's the requester
+   */
+  async getWorkspaceMembers(requestingUserId = null) {
+    return await userRepository.findAll(requestingUserId);
   },
 
   async updateUserRole(adminUserId, targetUserId, newRole) {

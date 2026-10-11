@@ -7,7 +7,7 @@ export const authService = {
   },
 
   async login(email, password) {
-    const response = await api.post('/auth/login', { email, password });
+    const response = await api.post('/auth/login', { email, password }, { timeout: 60000 });
     return response.data;
   },
 
@@ -33,5 +33,18 @@ export const authService = {
 
   logout() {
     localStorage.removeItem('token');
+  },
+
+  async logoutBackend() {
+    try {
+      await api.post('/auth/logout');
+    } catch (error) {
+      console.error('Backend logout failed:', error);
+    }
+  },
+
+  async changePassword(currentPassword, newPassword) {
+    const response = await api.post('/auth/change-password', { currentPassword, newPassword });
+    return response.data;
   }
 };

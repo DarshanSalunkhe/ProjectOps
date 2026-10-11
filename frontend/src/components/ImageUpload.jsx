@@ -1,210 +1,110 @@
 import { useState, useRef } from 'react';
 
 /**
- * Image upload component with Cloudinary integration
- * Supports drag-and-drop and file selection
+ * Compact clickable avatar upload control.
+ * Replaces the oversized drag-drop area with a small circular avatar
+ * that opens the file picker on click.
  */
 const ImageUpload = ({ currentPhotoUrl, onUploadSuccess, onRemove }) => {
   const [uploading, setUploading] = useState(false);
   const [preview, setPreview] = useState(null);
   const [error, setError] = useState('');
-  const [dragActive, setDragActive] = useState(false);
   const fileInputRef = useRef(null);
 
   const CLOUDINARY_CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
   const CLOUDINARY_UPLOAD_PRESET = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
-
-  const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+  const MAX_FILE_SIZE = 5 * 1024 * 1024;
   const ALLOWED_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
 
   const validateFile = (file) => {
-    if (!ALLOWED_TYPES.includes(file.type)) {
-      return 'Only JPG, JPEG, PNG, and WEBP images are allowed';
-    }
-    if (file.size > MAX_FILE_SIZE) {
-      return `File size must be less than ${MAX_FILE_SIZE / (1024 * 1024)}MB`;
-    }
+    if (!ALLOWED_TYPES.includes(file.type)) return 'Only JPG, PNG, WEBP are allowed';
+    if (file.size > MAX_FILE_SIZE) return 'File must be under 5 MB';
     return null;
   };
 
   const uploadToCloudinary = async (file) => {
     if (!CLOUDINARY_CLOUD_NAME || !CLOUDINARY_UPLOAD_PRESET) {
-      throw new Error('Cloudinary configuration is missing. Please contact support.');
+      throw new Error('Cloudinary not configured — set VITE_CLOUDINARY_CLOUD_NAME and VITE_CLOUDINARY_UPLOAD_PRESET');
     }
-
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
-    formData.append('folder', 'projectops/profiles');
-
-    const response = await fetch(
-      `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`,
-      {
-        method: 'POST',
-        body: formData
-      }
-    );
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error?.message || 'Upload failed');
-    }
-
-    const data = await response.json();
-    return data.secure_url;
+    const fd = new FormData();
+    fd.append('file', file);
+    fd.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+    fd.append('folder', 'projectops/profiles');
+    const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`, { method: 'POST', body: fd });
+    if (!res.ok) { const d = await res.json(); throw new Error(d.error?.message || 'Upload failed'); }
+    return (await res.json()).secure_url;
   };
 
   const handleFileSelect = async (file) => {
     setError('');
-    
-    const validationError = validateFile(file);
-    if (validationError) {
-      setError(validationError);
-      return;
-    }
+    const err = validateFile(file);
+    if (err) { setError(err); return; }
 
-    // Show preview
     const reader = new FileReader();
-    reader.onloadend = () => {
-      setPreview(reader.result);
-    };
+    reader.onloadend = () => setPreview(reader.result);
     reader.readAsDataURL(file);
 
-    // Upload to Cloudinary
     setUploading(true);
     try {
-      const imageUrl = await uploadToCloudinary(file);
-      onUploadSuccess(imageUrl);
-    } catch (err) {
-      setError(err.message || 'Upload failed. Please try again.');
+      const url = await uploadToCloudinary(file);
+      onUploadSuccess(url);
+    } catch (e) {
+      setError(e.message || 'Upload failed');
       setPreview(null);
     } finally {
       setUploading(false);
     }
   };
 
-  const handleInputChange = (e) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      handleFileSelect(file);
-    }
-  };
-
-  const handleDrag = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (e.type === 'dragenter' || e.type === 'dragover') {
-      setDragActive(true);
-    } else if (e.type === 'dragleave') {
-      setDragActive(false);
-    }
-  };
-
-  const handleDrop = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setDragActive(false);
-
-    const file = e.dataTransfer.files?.[0];
-    if (file) {
-      handleFileSelect(file);
-    }
-  };
-
-  const handleRemovePhoto = () => {
-    setPreview(null);
-    setError('');
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
-    onRemove();
-  };
-
-  const displayPhotoUrl = preview || currentPhotoUrl;
+  const displayUrl = preview || currentPhotoUrl;
+  const initials = '📷';
 
   return (
-    <div className="space-y-4">
-      {/* Current/Preview Photo */}
-      {displayPhotoUrl && (
-        <div className="flex items-center space-x-4">
-          <img
-            src={displayPhotoUrl}
-            alt="Profile preview"
-            className="w-24 h-24 rounded-full object-cover border-2 border-gray-200"
-          />
-          <button
-            type="button"
-            onClick={handleRemovePhoto}
-            className="text-sm text-red-600 hover:text-red-800"
-            disabled={uploading}
-          >
-            Remove Photo
-          </button>
-        </div>
-      )}
-
-      {/* Upload Area */}
-      <div
-        className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
-          dragActive
-            ? 'border-primary-500 bg-primary-50'
-            : 'border-gray-300 hover:border-gray-400'
-        } ${uploading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
-        onDragEnter={handleDrag}
-        onDragLeave={handleDrag}
-        onDragOver={handleDrag}
-        onDrop={handleDrop}
+    <div className="flex items-center gap-4">
+      {/* Compact avatar button */}
+      <button
+        type="button"
         onClick={() => !uploading && fileInputRef.current?.click()}
+        disabled={uploading}
+        aria-label="Upload profile photo"
+        title="Click to change photo"
+        className="relative w-16 h-16 rounded-full overflow-hidden border-2 border-slate-200 bg-slate-100 hover:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-500 transition-colors flex-shrink-0"
       >
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept=".jpg,.jpeg,.png,.webp"
-          onChange={handleInputChange}
-          className="hidden"
-          disabled={uploading}
-        />
-
-        {uploading ? (
-          <div className="space-y-2">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto"></div>
-            <p className="text-sm text-gray-600">Uploading...</p>
-          </div>
+        {displayUrl ? (
+          <img src={displayUrl} alt="Profile" className="w-full h-full object-cover" />
         ) : (
-          <div className="space-y-2">
-            <svg
-              className="mx-auto h-12 w-12 text-gray-400"
-              stroke="currentColor"
-              fill="none"
-              viewBox="0 0 48 48"
-              aria-hidden="true"
-            >
-              <path
-                d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02"
-                strokeWidth={2}
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-            <div className="text-sm text-gray-600">
-              <span className="font-medium text-primary-600 hover:text-primary-500">
-                Click to upload
-              </span>
-              {' or drag and drop'}
-            </div>
-            <p className="text-xs text-gray-500">
-              JPG, JPEG, PNG, WEBP up to 5MB
-            </p>
-          </div>
+          <span className="text-2xl flex items-center justify-center w-full h-full">{initials}</span>
         )}
-      </div>
+        {/* Overlay on hover */}
+        <span className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity text-white text-xs font-medium">
+          {uploading ? '…' : 'Change'}
+        </span>
+        {uploading && (
+          <span className="absolute inset-0 flex items-center justify-center bg-white/70">
+            <span className="w-5 h-5 border-2 border-primary-600 border-t-transparent rounded-full animate-spin" />
+          </span>
+        )}
+      </button>
 
-      {/* Error Message */}
-      {error && (
-        <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded p-2">
-          {error}
-        </div>
-      )}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".jpg,.jpeg,.png,.webp"
+        onChange={e => { const f = e.target.files?.[0]; if (f) handleFileSelect(f); }}
+        className="hidden"
+        disabled={uploading}
+      />
+
+      <div className="min-w-0">
+        <p className="text-xs text-slate-500">JPG, PNG, WEBP · max 5 MB</p>
+        {displayUrl && (
+          <button type="button" onClick={() => { setPreview(null); setError(''); if (fileInputRef.current) fileInputRef.current.value=''; onRemove?.(); }}
+            className="text-xs text-red-500 hover:text-red-700 mt-0.5">
+            Remove photo
+          </button>
+        )}
+        {error && <p className="text-xs text-red-600 mt-1">{error}</p>}
+      </div>
     </div>
   );
 };

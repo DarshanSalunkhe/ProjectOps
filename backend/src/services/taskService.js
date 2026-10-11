@@ -1,6 +1,8 @@
 import { taskRepository } from '../repositories/taskRepository.js';
 import { projectRepository } from '../repositories/projectRepository.js';
 import { userRepository } from '../repositories/userRepository.js';
+import { workloadService } from './workloadService.js';
+import { projectMemberRepository } from '../repositories/projectMemberRepository.js';
 import { AppError } from '../middleware/errorHandler.js';
 
 export const taskService = {
@@ -63,6 +65,17 @@ export const taskService = {
     }
 
     const task = await taskRepository.update(id, updates);
+
+    // Recalculate workload for assigned users if estimated_hours or status changed
+    if (existingTask.assigned_users && existingTask.assigned_users.length > 0 &&
+        (updates.estimated_hours !== undefined || updates.status !== undefined)) {
+      for (const assignedUser of existingTask.assigned_users) {
+        await workloadService.calculateUserWorkload(assignedUser.id).catch(err =>
+          console.error(`Failed to update workload for user ${assignedUser.id}:`, err)
+        );
+      }
+    }
+
     return task;
   },
 
@@ -73,6 +86,11 @@ export const taskService = {
     }
 
     await taskRepository.delete(id);
+    for (const assignedUser of existingTask.assigned_users || []) {
+      await workloadService.calculateUserWorkload(assignedUser.id).catch(err =>
+        console.error(`Failed to update workload for user ${assignedUser.id}:`, err)
+      );
+    }
     return { message: 'Task deleted successfully' };
   },
 
@@ -89,8 +107,19 @@ export const taskService = {
       throw new AppError('User not found', 404);
     }
 
+    const membership = await projectMemberRepository.findByProjectAndUser(task.project_id, userId);
+    if (!membership || membership.role === 'VIEWER') {
+      throw new AppError('Assignee must be an OWNER or DEVELOPER in this project', 400);
+    }
+
     try {
       await taskRepository.assignUser(taskId, userId);
+
+      // Recalculate user's workload
+      await workloadService.calculateUserWorkload(userId).catch(err =>
+        console.error(`Failed to update workload for user ${userId}:`, err)
+      );
+
       return { message: 'User assigned to task successfully' };
     } catch (error) {
       if (error.code === '23505') { // Unique constraint violation
@@ -106,6 +135,11 @@ export const taskService = {
     if (!result) {
       throw new AppError('Assignment not found', 404);
     }
+
+    // Recalculate user's workload
+    await workloadService.calculateUserWorkload(userId).catch(err =>
+      console.error(`Failed to update workload for user ${userId}:`, err)
+    );
 
     return { message: 'User unassigned from task successfully' };
   },

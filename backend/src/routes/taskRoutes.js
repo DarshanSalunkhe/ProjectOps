@@ -8,7 +8,8 @@ import {
   deleteTask,
   assignTask,
   unassignTask,
-  getStatistics
+  getStatistics,
+  getSkillMatches
 } from '../controllers/taskController.js';
 import {
   createDependency,
@@ -47,6 +48,13 @@ router.get('/:id',
   idValidation,
   requireTaskAccess,
   getTaskById
+);
+
+// Skill matching for assignments
+router.get('/:id/skill-matches',
+  idValidation,
+  requireTaskAccess,
+  getSkillMatches
 );
 
 router.patch('/:id', 

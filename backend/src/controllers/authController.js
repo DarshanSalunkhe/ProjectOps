@@ -1,5 +1,6 @@
 import { authService } from '../services/authService.js';
 import { asyncHandler } from '../middleware/errorHandler.js';
+import { AppError } from '../middleware/errorHandler.js';
 import { successResponse } from '../utils/response.js';
 
 export const register = asyncHandler(async (req, res) => {
@@ -73,4 +74,17 @@ export const updateUserRole = asyncHandler(async (req, res) => {
   const result = await authService.updateUserRole(adminUserId, targetUserId, role);
 
   successResponse(res, result, 'User role updated successfully');
+});
+
+export const getWorkspaceMembers = asyncHandler(async (req, res) => {
+  const members = await authService.getWorkspaceMembers(req.user?.id);
+  successResponse(res, members, 'Workspace members retrieved successfully');
+});
+
+export const changePassword = asyncHandler(async (req, res) => {
+  const { currentPassword, newPassword } = req.body;
+  if (!currentPassword || !newPassword) throw new AppError('currentPassword and newPassword are required', 400);
+  if (newPassword.length < 8) throw new AppError('New password must be at least 8 characters', 400);
+  const result = await authService.changePassword(req.user.id, currentPassword, newPassword);
+  successResponse(res, result, 'Password changed successfully');
 });
