@@ -29,7 +29,7 @@ export const getDependentTasks = asyncHandler(async (req, res) => {
 
 export const deleteDependency = asyncHandler(async (req, res) => {
   const dependencyId = parseInt(req.params.dependencyId);
-  const result = await dependencyService.deleteDependency(dependencyId);
+  const result = await dependencyService.deleteDependency(dependencyId, parseInt(req.params.taskId));
   successResponse(res, result, 'Dependency deleted successfully');
 });
 

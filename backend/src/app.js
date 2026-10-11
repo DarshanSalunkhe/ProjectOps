@@ -5,6 +5,7 @@ import passport, { configurePassport } from './config/passport.js';
 import routes from './routes/index.js';
 import { errorHandler, notFound } from './middleware/errorHandler.js';
 import logger from './middleware/logger.js';
+import githubWebhookRoutes from './routes/githubWebhookRoutes.js';
 
 const app = express();
 
@@ -13,6 +14,8 @@ configurePassport();
 
 // Middleware
 app.use(cors(config.cors));
+// Raw bytes must be verified before the general JSON parser changes the body.
+app.use('/api/github/webhook', githubWebhookRoutes);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(passport.initialize());

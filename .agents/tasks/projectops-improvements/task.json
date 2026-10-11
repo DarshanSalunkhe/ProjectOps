@@ -1,0 +1,13 @@
+{
+  "task_id": "projectops-improvements",
+  "task_description": "Complete ProjectOps platform improvements covering authentication, task management, AI integration, and visual design (Phases B, C, D)",
+  "status": "pending",
+  "feature_order": [
+    "FEAT-001",
+    "FEAT-002",
+    "FEAT-003",
+    "FEAT-004",
+    "FEAT-005"
+  ],
+  "blocked_reason": null
+}

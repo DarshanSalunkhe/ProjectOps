@@ -1,8 +1,14 @@
 import { verifyToken, isSessionRevoked } from '../utils/jwt.js';
 import { userRepository } from '../repositories/userRepository.js';
 import { AppError } from './errorHandler.js';
+import { isDatabaseConnectionError } from '../config/database.js';
 
-export const authenticate = async (req, res, next) => {
+export const createAuthenticate = ({
+  verifyToken: verify = verifyToken,
+  isSessionRevoked: checkRevoked = isSessionRevoked,
+  userRepository: users = userRepository,
+  isDatabaseConnectionError: isDbUnavailable = isDatabaseConnectionError
+} = {}) => async (req, res, next) => {
   try {
     // Get token from header
     const authHeader = req.headers.authorization;
@@ -14,21 +20,22 @@ export const authenticate = async (req, res, next) => {
     const token = authHeader.substring(7);
 
     // Verify token
-    const decoded = verifyToken(token);
+    const decoded = verify(token);
     if (!decoded) {
       throw new AppError('Invalid or expired token', 401);
     }
 
     // Check if session is revoked (for JWTs with jti)
     if (decoded.jti) {
-      const revoked = await isSessionRevoked(decoded.jti);
+      const revoked = await checkRevoked(decoded.jti);
       if (revoked) {
         throw new AppError('Session has been revoked', 401);
       }
     }
 
-    // Get user from database (provides fresh role/email)
-    const user = await userRepository.findById(decoded.userId);
+    // Always use fresh account and role state. An unavailable identity store
+    // cannot safely validate revocation or current privileges.
+    const user = await users.findById(decoded.userId);
     if (!user) {
       throw new AppError('User not found', 401);
     }
@@ -40,11 +47,15 @@ export const authenticate = async (req, res, next) => {
   } catch (error) {
     if (error instanceof AppError) {
       next(error);
+    } else if (isDbUnavailable(error)) {
+      next(new AppError('Authentication service temporarily unavailable', 503));
     } else {
-      next(new AppError('Authentication failed', 401));
+      next(error);
     }
   }
 };
+
+export const authenticate = createAuthenticate();
 
 export const authorize = (...roles) => {
   return (req, res, next) => {

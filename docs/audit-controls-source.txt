@@ -1,0 +1,338 @@
+frontend/src/layouts\MainLayout.jsx:46:    const focusable = () => [...panel.querySelectorAll('a,button,input')].filter(el => el.getClientRects().length);
+frontend/src/layouts\MainLayout.jsx:82:      <a className="skip-link" href="#main-content">Skip to content</a>
+frontend/src/layouts\MainLayout.jsx:84:        <div className="workspace-brand"><button className="mini-button mobile-menu" onClick={() => setDrawerOpen(!drawerOpen)} aria-label="Open navigation" aria-expanded={drawerOpen}><Icon name="menu" /></button><img src="/projectops-icon.svg" alt="" width={23} height={23} /><span>ProjectOps</span><span className="brand-chevron">⌄</span></div>
+frontend/src/layouts\MainLayout.jsx:85:        <div className="workspace-search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true"><circle cx="10" cy="10" r="6" /><path d="m15 15 5 5" /></svg><input type="search" aria-label="Search workspace projects" placeholder="Search projects…" value={query} onChange={e => {setQuery(e.target.value); setCollapsed(false); setProjectsOpen(true);}} />{query && <div className="workspace-search-results">{filteredProjects.length ? filteredProjects.map(project => <NavLink key={project.id} to={'/projects/'+project.id+'?tab=tasks'} onClick={() => setQuery('')}>{project.name}</NavLink>) : <p>No matching projects</p>}</div>}</div>
+frontend/src/layouts\MainLayout.jsx:86:        <div className="workspace-header-actions"><button className={`assistant-toggle ${assistantOpen ? 'is-active' : ''}`} aria-expanded={assistantOpen} onClick={() => setAssistantOpen(!assistantOpen)}><span>✦</span> AI assistant</button><Avatar user={user} size="sm" /></div>
+frontend/src/layouts\MainLayout.jsx:90:          <NavLink to="/projects" title="Projects" className={({isActive}) => 'rail-link ' + (isActive ? 'is-active' : '')}><Icon name="projects" /><span>Projects</span></NavLink>
+frontend/src/layouts\MainLayout.jsx:91:          <NavLink to="/tasks" title="Your work" className={({isActive}) => 'rail-link ' + (isActive ? 'is-active' : '')}><Icon name="tasks" /><span>Work</span></NavLink>
+frontend/src/layouts\MainLayout.jsx:92:          <NavLink to="/ai/planner" title="AI Planner" className={({isActive}) => 'rail-link ' + (isActive ? 'is-active' : '')}><Icon name="dashboard" /><span>AI</span></NavLink>
+frontend/src/layouts\MainLayout.jsx:93:          <NavLink to="/team" title="Team" className={({isActive}) => 'rail-link ' + (isActive ? 'is-active' : '')}><Icon name="team" /><span>Team</span></NavLink>
+frontend/src/layouts\MainLayout.jsx:94:          <NavLink to="/settings" title="Settings" className={({isActive}) => 'rail-link rail-settings ' + (isActive ? 'is-active' : '')}><Icon name="admin" /><span>Settings</span></NavLink>
+frontend/src/layouts\MainLayout.jsx:95:          <button className="rail-link rail-collapse" onClick={() => setCollapsed(!collapsed)} aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'} aria-expanded={!collapsed}><Icon name="menu" /></button>
+frontend/src/layouts\MainLayout.jsx:97:        {drawerOpen && <button className="drawer-scrim" onClick={() => setDrawerOpen(false)} aria-label="Close navigation" />}
+frontend/src/layouts\MainLayout.jsx:99:          <div className="sidebar-heading"><strong>Projects</strong><button className="mini-button desktop-collapse" onClick={() => setCollapsed(true)} aria-label="Collapse sidebar"><Icon name="menu" /></button><button className="mini-button mobile-menu" onClick={() => setDrawerOpen(false)} aria-label="Close navigation">×</button></div>
+frontend/src/layouts\MainLayout.jsx:100:          <NavLink className="sidebar-quick-action" to={currentProject ? '/projects/'+currentProject.id+'?tab=tasks' : '/tasks'}>⊕ <span>Work items</span></NavLink>
+frontend/src/layouts\MainLayout.jsx:103:            {visibleNavItems.map(item => <NavLink key={item.path} to={item.path} title={item.label} className={({isActive}) => 'sidebar-link ' + (isActive ? 'sidebar-link-active' : '')}><Icon name={item.icon} /><span>{item.label}</span></NavLink>)}
+frontend/src/layouts\MainLayout.jsx:105:          <section className="sidebar-projects"><button className="sidebar-section-label" onClick={() => setProjectsOpen(!projectsOpen)} aria-expanded={projectsOpen}>Projects <span>{projectsOpen ? '⌄' : '›'}</span></button>{projectsOpen && <div>{projectError ? <p role="alert" className="sidebar-empty">{projectError}</p> : filteredProjects.map(project => <NavLink key={project.id} to={'/projects/'+project.id+'?tab=tasks'} className={({isActive}) => 'sidebar-link sidebar-project ' + (isActive ? 'sidebar-link-active' : '')}><span className="project-glyph">▧</span><span className="truncate">{project.name}</span></NavLink>)}{!projectError && !filteredProjects.length && <p className="sidebar-empty">{query ? 'No matching projects' : 'No projects yet'}</p>}</div>}</section>
+frontend/src/layouts\MainLayout.jsx:106:          <div className="sidebar-footer"><span className="workspace-plan">▧ Workspace</span><button className="mini-button" onClick={logout} aria-label="Log out" title="Log out"><Icon name="logout" /></button></div>
+frontend/src/components\AICommandCenter.jsx:214:          <button
+frontend/src/components\AICommandCenter.jsx:215:            onClick={() => setShowPlanner(true)}
+frontend/src/components\AICommandCenter.jsx:219:          </button>
+frontend/src/components\AICommandCenter.jsx:291:              <button
+frontend/src/components\AICommandCenter.jsx:292:                onClick={generatePlan}
+frontend/src/components\AICommandCenter.jsx:293:                disabled={plannerLoading || !canManage}
+frontend/src/components\AICommandCenter.jsx:297:              </button>
+frontend/src/components\AICommandCenter.jsx:298:              <button
+frontend/src/components\AICommandCenter.jsx:299:                onClick={() => setShowPlanner(false)}
+frontend/src/components\AICommandCenter.jsx:303:              </button>
+frontend/src/components\AICommandCenter.jsx:360:              <button
+frontend/src/components\AICommandCenter.jsx:361:                onClick={() => setConfirmPlan(true)}
+frontend/src/components\AICommandCenter.jsx:362:                disabled={plannerLoading}
+frontend/src/components\AICommandCenter.jsx:366:              </button>
+frontend/src/components\AICommandCenter.jsx:367:              <button
+frontend/src/components\AICommandCenter.jsx:368:                onClick={() => {
+frontend/src/components\AICommandCenter.jsx:375:              </button>
+frontend/src/components\AICommandCenter.jsx:392:            <button onClick={loadHealth} className="btn-secondary text-sm">
+frontend/src/components\AICommandCenter.jsx:394:            </button>
+frontend/src/components\AICommandCenter.jsx:421:          <button
+frontend/src/components\AICommandCenter.jsx:422:            onClick={loadAssignmentRecommendations}
+frontend/src/components\AICommandCenter.jsx:424:            disabled={loading}
+frontend/src/components\AICommandCenter.jsx:427:          </button>
+frontend/src/components\AICommandCenter.jsx:432:      {showAssignments && assignmentRecs.length === 0 && <div className="card"><p>No unassigned tasks available for recommendations.</p><button className="btn-secondary mt-3" onClick={() => setShowAssignments(false)}>Close recommendations</button></div>}
+frontend/src/components\AICommandCenter.jsx:461:          <button onClick={() => setShowAssignments(false)} className="btn-secondary w-full mt-4">
+frontend/src/components\AICommandCenter.jsx:463:          </button>
+frontend/src/components\AICommandCenter.jsx:477:            <select
+frontend/src/components\AICommandCenter.jsx:482:              disabled={loading}
+frontend/src/components\AICommandCenter.jsx:487:            <label className="block text-sm mb-2" htmlFor="delay-days">Simulated delay in days</label><input id="delay-days" className="input mb-3" type="number" min="1" max="365" value={delayDays} onChange={e => setDelayDays(e.target.value)} /><button className="btn-primary mb-3" disabled={loading || !selectedTaskId || Number(delayDays) < 1 || Number(delayDays) > 365} onClick={() => simulateDelay(selectedTaskId)}>Analyze impact & propose recovery</button>
+frontend/src/components\AICommandCenter.jsx:493:          <button onClick={resetDemo} className="btn-secondary w-full">
+frontend/src/components\AICommandCenter.jsx:495:          </button>
+frontend/src/components\AICommandCenter.jsx:612:              <button className="btn-primary flex-1" disabled>
+frontend/src/components\AICommandCenter.jsx:614:              </button>
+frontend/src/components\AICommandCenter.jsx:615:              <button onClick={resetDemo} className="btn-secondary">
+frontend/src/components\AICommandCenter.jsx:617:              </button>
+frontend/src/components\WorkspaceUI.jsx:6:export const ErrorState = ({ message, onRetry }) => <div className="error-state" role="alert"><p>{message}</p>{onRetry && <button className="btn-secondary mt-3" onClick={onRetry}>Try again</button>}</div>;
+frontend/src/components\WorkspaceUI.jsx:11:  return <dialog ref={ref} className="confirmation-dialog" onCancel={onClose}><h2 className="text-xl font-semibold">{title}</h2><div className="my-5 text-sm">{children}</div><div className="flex justify-end gap-3"><button className="btn-secondary" disabled={busy} onClick={onClose}>Cancel</button><button className="btn-primary" disabled={busy} onClick={onConfirm}>{busy ? 'Applying…' : 'Confirm'}</button></div></dialog>;
+frontend/src/pages\Team.jsx:114:          <select
+frontend/src/pages\Team.jsx:127:          <select
+frontend/src/pages\Team.jsx:142:          type="search"
+frontend/src/pages\Team.jsx:181:                  <Link to={`/profile`} className="block">
+frontend/src/components\WorkspaceAssistant.jsx:23:    <div className="assistant-heading"><span>ProjectOps AI</span><div><button className="mini-button" aria-label="Refresh project analysis" disabled={!project || loading} onClick={() => setRevision(n => n + 1)}>↻</button><button className="mini-button" aria-label="Close AI assistant" onClick={onClose}>×</button></div></div>
+frontend/src/components\WorkspaceAssistant.jsx:26:      {!project ? <><p>Select a project to see its live health and risk signals here.</p><Link className="assistant-link" to="/projects">Browse projects →</Link></> : loading ? <p role="status">Reviewing project health…</p> : error ? <div role="alert"><p>{error}</p><button className="btn-secondary mt-3" onClick={() => setRevision(n => n + 1)}>Try again</button></div> : analysis && <>
+frontend/src/components\WorkspaceAssistant.jsx:30:        <ul className="assistant-risks">{(analysis.risks || []).map((risk, index) => <li key={index}><Link to={`/projects/${project.id}?tab=ai`}>{risk.taskTitle || risk.type?.replaceAll('_', ' ') || 'Project risk'}</Link><p>{risk.message}</p></li>)}</ul>
+frontend/src/components\WorkspaceAssistant.jsx:31:        <div className="assistant-suggestion"><p>Review the affected tasks or run a recovery analysis to plan your next steps.</p><Link className="btn-secondary" to={`/projects/${project.id}?tab=ai`}>Open AI Command Center ↗</Link></div>
+frontend/src/components\WorkspaceAssistant.jsx:34:    <div className="assistant-context"><span className="context-label">✦ {project?.name || 'Workspace context'}</span><p>Plan work, review assignments, and explore dependency impact.</p><Link className="assistant-launch" to={project ? `/projects/${project.id}?tab=ai` : '/ai/planner'}>Explore AI tools <span>↑</span></Link></div>
+frontend/src/components\TaskCard.jsx:120:        <button
+frontend/src/components\TaskCard.jsx:121:          onClick={() => setShowSkills(!showSkills)}
+frontend/src/components\TaskCard.jsx:125:        </button>
+frontend/src/components\TaskCard.jsx:140:                      <button
+frontend/src/components\TaskCard.jsx:141:                        onClick={() => handleRemoveSkill(skill.skill_name)}
+frontend/src/components\TaskCard.jsx:146:                      </button>
+frontend/src/components\TaskCard.jsx:164:                <select
+frontend/src/components\TaskCard.jsx:183:                <button
+frontend/src/components\TaskCard.jsx:184:                  onClick={handleAddSkill}
+frontend/src/components\TaskCard.jsx:188:                </button>
+frontend/src/components\TaskCard.jsx:189:                <button
+frontend/src/components\TaskCard.jsx:190:                  onClick={() => setEditingSkills(false)}
+frontend/src/components\TaskCard.jsx:194:                </button>
+frontend/src/components\TaskCard.jsx:199:              <button
+frontend/src/components\TaskCard.jsx:200:                onClick={() => setEditingSkills(true)}
+frontend/src/components\TaskCard.jsx:204:              </button>
+frontend/src/components\TaskCard.jsx:216:              <button
+frontend/src/components\TaskCard.jsx:217:                onClick={fetchRecommendations}
+frontend/src/components\TaskCard.jsx:218:                disabled={loadingRecommendations}
+frontend/src/components\TaskCard.jsx:222:              </button>
+frontend/src/components\TaskCard.jsx:239:                <button
+frontend/src/components\TaskCard.jsx:240:                  onClick={() => setShowRecommendations(false)}
+frontend/src/components\TaskCard.jsx:244:                </button>
+frontend/src/components\TaskCard.jsx:261:                          <button
+frontend/src/components\TaskCard.jsx:262:                            onClick={() => handleAssignMember(rec.user.id)}
+frontend/src/components\TaskCard.jsx:266:                          </button>
+frontend/src/components\ImageUpload.jsx:135:          <button
+frontend/src/components\ImageUpload.jsx:136:            type="button"
+frontend/src/components\ImageUpload.jsx:137:            onClick={handleRemovePhoto}
+frontend/src/components\ImageUpload.jsx:139:            disabled={uploading}
+frontend/src/components\ImageUpload.jsx:142:          </button>
+frontend/src/components\ImageUpload.jsx:157:        onClick={() => !uploading && fileInputRef.current?.click()}
+frontend/src/components\ImageUpload.jsx:165:          disabled={uploading}
+frontend/src/pages\Risks.jsx:99:          <select
+frontend/src/pages\Risks.jsx:135:          <button onClick={fetchRisks} className="btn-secondary text-sm">
+frontend/src/pages\Risks.jsx:137:          </button>
+frontend/src/pages\Risks.jsx:163:                {selectedProject && <Link className="inline-block text-sm underline mb-3" to={'/projects/'+selectedProject+'?tab=ai'}>Review affected tasks & recovery →</Link>}
+frontend/src/components\DependencyGraph.jsx:50:    <div className="card"><div className="flex flex-wrap gap-2 items-center justify-between mb-4"><div><h3 className="font-semibold">Dependency map</h3><p className="text-xs text-slate-400 mt-1">Arrows flow from prerequisites to dependent tasks. Scroll to explore.</p></div><div className="flex gap-2"><button className="btn-secondary" aria-label="Zoom out" disabled={zoom <= .5} onClick={() => setZoom(z => Math.max(.5,z-.25))}>−</button><button className="btn-secondary" onClick={() => setZoom(1)}>Reset</button><button className="btn-secondary" aria-label="Zoom in" disabled={zoom >= 2} onClick={() => setZoom(z => Math.min(2,z+.25))}>+</button></div></div><div className="overflow-auto max-h-[650px]">
+frontend/src/components\ProjectTabs.jsx:10:  <div className="project-tabs"><nav aria-label="Project sections">{tabs.map(tab => <button key={tab.id} aria-pressed={activeTab === tab.id} onClick={() => onTabChange(tab.id)} className={`project-tab ${activeTab === tab.id ? 'project-tab-active' : ''}`}>{tab.label}</button>)}</nav></div>
+frontend/src/components\ProjectTabs.jsx:84:          <button onClick={() => setShowModal(true)} className="btn-primary">
+frontend/src/components\ProjectTabs.jsx:86:          </button>
+frontend/src/components\ProjectTabs.jsx:98:                disabled={!canEdit}
+frontend/src/components\ProjectTabs.jsx:118:                <button
+frontend/src/components\ProjectTabs.jsx:119:                  onClick={() => handleDelete(milestone.id)}
+frontend/src/components\ProjectTabs.jsx:123:                </button>
+frontend/src/components\ProjectTabs.jsx:143:            <form onSubmit={handleCreate} className="space-y-4">
+frontend/src/components\ProjectTabs.jsx:173:                <button type="button" onClick={() => setShowModal(false)} className="btn-secondary">
+frontend/src/components\ProjectTabs.jsx:175:                </button>
+frontend/src/components\ProjectTabs.jsx:176:                <button type="submit" className="btn-primary">Create</button>
+frontend/src/components\ProjectTabs.jsx:312:                    href={project.github_repo_url}
+frontend/src/components\ProjectTabs.jsx:321:                  <button onClick={() => setEditing(true)} className="btn-secondary text-sm">
+frontend/src/components\ProjectTabs.jsx:323:                  </button>
+frontend/src/components\ProjectTabs.jsx:330:                  <button onClick={() => setEditing(true)} className="btn-primary">
+frontend/src/components\ProjectTabs.jsx:332:                  </button>
+frontend/src/components\ProjectTabs.jsx:355:              <button onClick={handleSave} disabled={saving} className="btn-primary">
+frontend/src/components\ProjectTabs.jsx:357:              </button>
+frontend/src/components\ProjectTabs.jsx:358:              <button
+frontend/src/components\ProjectTabs.jsx:359:                onClick={() => {
+frontend/src/components\ProjectTabs.jsx:367:              </button>
+frontend/src/components\ProjectTabs.jsx:412:          <button
+frontend/src/components\ProjectTabs.jsx:413:            onClick={() => setView('graph')}
+frontend/src/components\ProjectTabs.jsx:419:          </button>
+frontend/src/components\ProjectTabs.jsx:420:          <button
+frontend/src/components\ProjectTabs.jsx:421:            onClick={() => setView('list')}
+frontend/src/components\ProjectTabs.jsx:427:          </button>
+frontend/src/pages\ProjectDetail.jsx:250:          <Link to="/projects" className="text-primary-600 hover:text-primary-700 mt-4 inline-block">
+frontend/src/pages\ProjectDetail.jsx:261:        <Link to="/projects" className="text-primary-600 hover:text-primary-700 text-sm">
+frontend/src/pages\ProjectDetail.jsx:283:              <button
+frontend/src/pages\ProjectDetail.jsx:284:                onClick={handleArchive}
+frontend/src/pages\ProjectDetail.jsx:288:              </button>
+frontend/src/pages\ProjectDetail.jsx:289:              <button
+frontend/src/pages\ProjectDetail.jsx:290:                onClick={handleDelete}
+frontend/src/pages\ProjectDetail.jsx:294:              </button>
+frontend/src/pages\ProjectDetail.jsx:295:              <Link
+frontend/src/pages\ProjectDetail.jsx:380:              <h2 className="text-xl font-semibold">Work items <span className="work-items-count">{tasks.length}</span></h2><input className="input sm:max-w-xs" type="search" aria-label="Search project tasks" placeholder="Search tasks…" value={taskQuery} onChange={e => setTaskQuery(e.target.value)} /><button className="btn-secondary" onClick={() => setTaskView(taskView === 'list' ? 'board' : 'list')}>{taskView === 'list' ? '▥ Kanban' : '☷ List'}</button>
+frontend/src/pages\ProjectDetail.jsx:381:              <button onClick={() => setShowTaskModal(true)} className="btn-primary">
+frontend/src/pages\ProjectDetail.jsx:383:              </button>
+frontend/src/pages\ProjectDetail.jsx:425:              <form onSubmit={handleCreateTask} className="space-y-4">
+frontend/src/pages\ProjectDetail.jsx:458:                    <select
+frontend/src/pages\ProjectDetail.jsx:474:                    <select
+frontend/src/pages\ProjectDetail.jsx:533:                          <button
+frontend/src/pages\ProjectDetail.jsx:534:                            type="button"
+frontend/src/pages\ProjectDetail.jsx:535:                            onClick={() => handleRemoveSkill(skill.skill_name)}
+frontend/src/pages\ProjectDetail.jsx:540:                          </button>
+frontend/src/pages\ProjectDetail.jsx:565:                        <select
+frontend/src/pages\ProjectDetail.jsx:586:                        <button
+frontend/src/pages\ProjectDetail.jsx:587:                          type="button"
+frontend/src/pages\ProjectDetail.jsx:588:                          onClick={handleAddSkill}
+frontend/src/pages\ProjectDetail.jsx:592:                        </button>
+frontend/src/pages\ProjectDetail.jsx:602:                  <button
+frontend/src/pages\ProjectDetail.jsx:603:                    type="button"
+frontend/src/pages\ProjectDetail.jsx:604:                    onClick={() => setShowTaskModal(false)}
+frontend/src/pages\ProjectDetail.jsx:608:                  </button>
+frontend/src/pages\ProjectDetail.jsx:609:                  <button type="submit" className="btn-primary">
+frontend/src/pages\ProjectDetail.jsx:611:                  </button>
+frontend/src/pages\Skills.jsx:128:        <button
+frontend/src/pages\Skills.jsx:129:          onClick={() => setActiveTab('my-skills')}
+frontend/src/pages\Skills.jsx:137:        </button>
+frontend/src/pages\Skills.jsx:138:        <button
+frontend/src/pages\Skills.jsx:139:          onClick={() => setActiveTab('workspace')}
+frontend/src/pages\Skills.jsx:147:        </button>
+frontend/src/pages\Skills.jsx:148:        <button
+frontend/src/pages\Skills.jsx:149:          onClick={() => setActiveTab('gaps')}
+frontend/src/pages\Skills.jsx:157:        </button>
+frontend/src/pages\Skills.jsx:165:            <button onClick={() => setShowAddModal(true)} className="btn-primary">
+frontend/src/pages\Skills.jsx:167:            </button>
+frontend/src/pages\Skills.jsx:186:                    <button
+frontend/src/pages\Skills.jsx:187:                      onClick={() => handleRemoveSkill(skill.skill_name)}
+frontend/src/pages\Skills.jsx:194:                    </button>
+frontend/src/pages\Skills.jsx:209:                <button onClick={() => setShowAddModal(true)} className="btn-primary mt-4">
+frontend/src/pages\Skills.jsx:211:                </button>
+frontend/src/pages\Skills.jsx:316:            <form onSubmit={handleAddSkill}>
+frontend/src/pages\Skills.jsx:335:                <select
+frontend/src/pages\Skills.jsx:363:                <button type="button" onClick={() => setShowAddModal(false)} className="btn-secondary flex-1">
+frontend/src/pages\Skills.jsx:365:                </button>
+frontend/src/pages\Skills.jsx:366:                <button type="submit" className="btn-primary flex-1">
+frontend/src/pages\Skills.jsx:368:                </button>
+frontend/src/pages\Projects.jsx:123:          <button onClick={() => setShowCreateModal(true)} className="btn-primary self-start sm:self-auto">
+frontend/src/pages\Projects.jsx:125:          </button>
+frontend/src/pages\Projects.jsx:137:        <button
+frontend/src/pages\Projects.jsx:138:          onClick={() => setFilterArchived('active')}
+frontend/src/pages\Projects.jsx:146:        </button>
+frontend/src/pages\Projects.jsx:147:        <button
+frontend/src/pages\Projects.jsx:148:          onClick={() => setFilterArchived('archived')}
+frontend/src/pages\Projects.jsx:156:        </button>
+frontend/src/pages\Projects.jsx:157:        <button
+frontend/src/pages\Projects.jsx:158:          onClick={() => setFilterArchived('all')}
+frontend/src/pages\Projects.jsx:166:        </button>
+frontend/src/pages\Projects.jsx:195:            <button
+frontend/src/pages\Projects.jsx:196:              onClick={handleClearSearch}
+frontend/src/pages\Projects.jsx:211:            </button>
+frontend/src/pages\Projects.jsx:220:            <Link
+frontend/src/pages\Projects.jsx:236:                      <button
+frontend/src/pages\Projects.jsx:237:                        onClick={(e) => handleRestoreProject(project.id, e)}
+frontend/src/pages\Projects.jsx:241:                      </button>
+frontend/src/pages\Projects.jsx:311:              <form onSubmit={handleCreateProject} className="space-y-4">
+frontend/src/pages\Projects.jsx:356:                  <select
+frontend/src/pages\Projects.jsx:396:                  <button
+frontend/src/pages\Projects.jsx:397:                    type="button"
+frontend/src/pages\Projects.jsx:398:                    onClick={() => setShowCreateModal(false)}
+frontend/src/pages\Projects.jsx:402:                  </button>
+frontend/src/pages\Projects.jsx:403:                  <button type="submit" className="btn-primary">
+frontend/src/pages\Projects.jsx:405:                  </button>
+frontend/src/pages\ProjectMembers.jsx:169:          <Link to="/projects" className="text-primary-600 hover:text-primary-700 mt-4 inline-block">
+frontend/src/pages\ProjectMembers.jsx:182:        <Link to={`/projects/${id}`} className="text-primary-600 hover:text-primary-700 text-sm">
+frontend/src/pages\ProjectMembers.jsx:194:          <button onClick={() => setShowInviteModal(true)} className="btn-primary self-start sm:self-auto">
+frontend/src/pages\ProjectMembers.jsx:196:          </button>
+frontend/src/pages\ProjectMembers.jsx:241:                      <button
+frontend/src/pages\ProjectMembers.jsx:242:                        onClick={() => handleChangeRole(member.id, member.role)}
+frontend/src/pages\ProjectMembers.jsx:247:                      </button>
+frontend/src/pages\ProjectMembers.jsx:248:                      <button
+frontend/src/pages\ProjectMembers.jsx:249:                        onClick={() => handleRemoveMember(member.id, member.user_name)}
+frontend/src/pages\ProjectMembers.jsx:254:                      </button>
+frontend/src/pages\ProjectMembers.jsx:286:                  <button
+frontend/src/pages\ProjectMembers.jsx:287:                    onClick={() => handleCancelInvitation(invitation.id, invitation.invited_email)}
+frontend/src/pages\ProjectMembers.jsx:291:                  </button>
+frontend/src/pages\ProjectMembers.jsx:312:              <form onSubmit={handleInviteMember} className="space-y-4">
+frontend/src/pages\ProjectMembers.jsx:334:                  <select
+frontend/src/pages\ProjectMembers.jsx:345:                  <button
+frontend/src/pages\ProjectMembers.jsx:346:                    type="button"
+frontend/src/pages\ProjectMembers.jsx:347:                    onClick={() => {
+frontend/src/pages\ProjectMembers.jsx:353:                    disabled={submitting}
+frontend/src/pages\ProjectMembers.jsx:356:                  </button>
+frontend/src/pages\ProjectMembers.jsx:357:                  <button type="submit" className="btn-primary" disabled={submitting}>
+frontend/src/pages\ProjectMembers.jsx:359:                  </button>
+frontend/src/pages\ProjectMembers.jsx:417:                      onClick={(e) => e.target.select()}
+frontend/src/pages\ProjectMembers.jsx:419:                    <button
+frontend/src/pages\ProjectMembers.jsx:420:                      onClick={handleCopyInvitationLink}
+frontend/src/pages\ProjectMembers.jsx:425:                    </button>
+frontend/src/pages\ProjectMembers.jsx:434:                <button
+frontend/src/pages\ProjectMembers.jsx:435:                  onClick={handleCloseInvitationLink}
+frontend/src/pages\ProjectMembers.jsx:439:                </button>
+frontend/src/pages\Tasks.jsx:69:            type="search"
+frontend/src/pages\Tasks.jsx:79:      <div className="mb-5 flex flex-wrap gap-3"><select className="input sm:w-auto" aria-label="Filter status" value={statusFilter} onChange={e => setStatusFilter(e.target.value)}><option value="">All statuses</option>{['TODO','IN_PROGRESS','BLOCKED','COMPLETED'].map(s => <option key={s}>{s}</option>)}</select><select className="input sm:w-auto" aria-label="Filter priority" value={priorityFilter} onChange={e => setPriorityFilter(e.target.value)}><option value="">All priorities</option>{['LOW','MEDIUM','HIGH','CRITICAL'].map(s => <option key={s}>{s}</option>)}</select><button className="btn-secondary" onClick={() => setView(view === 'list' ? 'board' : 'list')}>{view === 'list' ? 'Board view' : 'List view'}</button></div>
+frontend/src/pages\Tasks.jsx:80:      {selectedTask && <section className="card mb-5" aria-label="Task details"><div className="flex justify-between gap-3"><h2 className="text-xl font-semibold">{selectedTask.title}</h2><button className="btn-secondary" onClick={() => setSelectedTask(null)}>Close</button></div><p className="my-4 text-sm">{selectedTask.description || 'No description provided.'}</p><div className="flex gap-3"><StatusBadge status={selectedTask.status} /><StatusBadge status={selectedTask.priority} /></div><p className="text-sm my-4">Assigned to: {selectedTask.assigned_users?.map(u => u.name).join(', ') || 'Unassigned'}</p><Link to={'/projects/'+selectedTask.project_id+'?tab=tasks'} className="btn-primary">Open project workspace</Link></section>}
+frontend/src/pages\Tasks.jsx:85:      ) : view === 'board' ? (<div className="kanban-board">{['TODO','IN_PROGRESS','BLOCKED','COMPLETED'].map(status => <section className="kanban-column" key={status}><h3>{status.replaceAll('_',' ')} <span>{filteredTasks.filter(t => t.status === status).length}</span></h3><div className="space-y-3">{filteredTasks.filter(t => t.status === status).map(task => <button className="card w-full text-left" key={task.id} onClick={() => setSelectedTask(task)}><p className="text-xs text-slate-400 mb-2">{task.project_name}</p><p className="text-sm font-medium mb-3">{task.title}</p><StatusBadge status={task.priority} />{task.deadline && <p className="mt-3 text-xs text-slate-400">Due {new Date(task.deadline).toLocaleDateString()}</p>}</button>)}</div></section>)}</div>) : filteredTasks.length > 0 ? (
+frontend/src/pages\Tasks.jsx:91:                  <h2 className="break-words text-base font-semibold text-slate-900"><button className="text-left hover:underline" onClick={() => setSelectedTask(task)}>{task.title}</button></h2>
+frontend/src/pages\Tasks.jsx:115:          <Link to="/projects" className="btn-secondary mt-5">Browse projects</Link>
+frontend/src/pages\AdminUsers.jsx:127:          <input type="search" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Search name, email, or role" aria-label="Search users" className="input w-full sm:max-w-xs" />
+frontend/src/pages\AdminUsers.jsx:142:                  {userData.id === user?.id ? <span className="w-full text-xs text-slate-400">Cannot edit own role</span> : <button onClick={() => handleRoleChangeClick(userData)} className="text-xs font-semibold text-primary-700 hover:text-primary-900">Change role</button>}
+frontend/src/pages\AdminUsers.jsx:199:                        <button
+frontend/src/pages\AdminUsers.jsx:200:                          onClick={() => handleRoleChangeClick(userData)}
+frontend/src/pages\AdminUsers.jsx:204:                        </button>
+frontend/src/pages\AdminUsers.jsx:246:                <select
+frontend/src/pages\AdminUsers.jsx:269:              <button
+frontend/src/pages\AdminUsers.jsx:270:                onClick={() => {
+frontend/src/pages\AdminUsers.jsx:276:                disabled={updating}
+frontend/src/pages\AdminUsers.jsx:279:              </button>
+frontend/src/pages\AdminUsers.jsx:280:              <button
+frontend/src/pages\AdminUsers.jsx:281:                onClick={handleRoleChange}
+frontend/src/pages\AdminUsers.jsx:283:                disabled={updating || newRole === selectedUser.role}
+frontend/src/pages\AdminUsers.jsx:286:              </button>
+frontend/src/pages\auth\ForgotPassword.jsx:42:          <Link to="/login" className="btn-primary inline-block">
+frontend/src/pages\auth\ForgotPassword.jsx:63:      <form onSubmit={handleSubmit} className="space-y-4">
+frontend/src/pages\auth\ForgotPassword.jsx:76:            disabled={loading}
+frontend/src/pages\auth\ForgotPassword.jsx:80:        <button
+frontend/src/pages\auth\ForgotPassword.jsx:82:          disabled={loading}
+frontend/src/pages\auth\ForgotPassword.jsx:86:        </button>
+frontend/src/pages\auth\ForgotPassword.jsx:91:        <Link to="/login" className="text-primary-600 hover:text-primary-700 font-medium">
+frontend/src/pages\Dashboard.jsx:40:    <PageHeader eyebrow="Workspace intelligence" title={`Overview, ${user?.name?.split(' ')[0] || 'team'}`} description="Project health, delivery signals, and the work that needs your attention." actions={<><button className="btn-secondary" disabled={loading} onClick={load}>{loading ? 'Refreshing…' : 'Refresh'}</button>{canCreateProject(user) && <Link className="btn-primary" to="/projects">+ New project</Link>}</>} />
+frontend/src/pages\Dashboard.jsx:50:      <div className="lg:col-span-2"><DashboardCard title="Project health" action={<Link className="text-xs text-blue-300" to="/projects">All projects →</Link>}>{data.analyzing ? <LoadingState label="Analyzing projects…" /> : intelligence.length ? <div className="space-y-3">{intelligence.map(i => <Link to={'/projects/'+i.project.id} key={i.project.id} className="flex items-center justify-between gap-3 border-b border-slate-200 pb-3"><span className="truncate text-sm">{i.project.name}</span><div className="flex items-center gap-3"><span className="text-sm text-slate-400">{i.health?.health?.score ?? '—'}</span><StatusBadge status={i.health?.health?.status || 'UNAVAILABLE'} /></div></Link>)}</div> : <EmptyState title="Start your workspace" description="Create a project to begin tracking health." />}</DashboardCard></div>
+frontend/src/pages\Dashboard.jsx:51:      <DashboardCard title="Upcoming deadlines">{deadlines.length ? deadlines.map(t => <Link className="block border-b border-slate-200 py-3" key={t.id} to={'/projects/'+t.project_id}><p className="text-sm">{t.title}</p><p className="text-xs text-slate-400 mt-1">{new Date(t.deadline).toLocaleDateString()} · {t.project_name}</p></Link>) : <EmptyState title="No scheduled deadlines" />}</DashboardCard>
+frontend/src/pages\Dashboard.jsx:53:      <DashboardCard title="AI recommendations">{data.analyzing ? <LoadingState label="Checking risk signals…" /> : risks.length ? risks.slice(0,4).map((r,i) => <Link to={'/projects/'+r.project.id+'?tab=ai'} className="block py-3 border-b border-slate-200" key={i}><StatusBadge status={r.severity} /><p className="text-sm mt-2">{r.message}</p><p className="text-xs text-slate-400 mt-1">{r.project.name} · Review recovery options →</p></Link>) : <EmptyState title={intelligence.some(i => i.failed) ? 'Some analysis is unavailable' : 'No active risk signals'} description="Open a project’s AI Command Center to run impact and assignment analysis." />}</DashboardCard>
+frontend/src/pages\Dashboard.jsx:54:      <div className="lg:col-span-3"><DashboardCard title="Recent activity">{data.analyzing ? <LoadingState label="Loading activity…" /> : activity.length ? activity.map((a,i) => <Link key={a.id || i} to={'/projects/'+a.project.id+'?tab=activity'} className="flex flex-wrap items-center justify-between gap-2 py-3 border-b border-slate-200"><div><p className="text-sm">{a.description}</p><p className="text-xs text-slate-400 mt-1">{a.user_name || 'System'} · {a.project.name}</p></div><time className="text-xs text-slate-400">{new Date(a.created_at).toLocaleString()}</time></Link>) : <EmptyState title="No activity available" description={intelligence.some(i => i.failed) ? 'Some project services could not be reached. Refresh to retry.' : 'Recorded project activity will appear here.'} />}</DashboardCard></div>
+frontend/src/pages\AIPlanner.jsx:68:          <form onSubmit={handleGenerate} className="space-y-5">
+frontend/src/pages\AIPlanner.jsx:144:              <button
+frontend/src/pages\AIPlanner.jsx:146:                disabled={loading}
+frontend/src/pages\AIPlanner.jsx:150:              </button>
+frontend/src/pages\AIPlanner.jsx:151:              <button
+frontend/src/pages\AIPlanner.jsx:152:                type="button"
+frontend/src/pages\AIPlanner.jsx:153:                onClick={() => navigate(-1)}
+frontend/src/pages\AIPlanner.jsx:157:              </button>
+frontend/src/pages\AIPlanner.jsx:232:            <select
+frontend/src/pages\AIPlanner.jsx:247:            <button
+frontend/src/pages\AIPlanner.jsx:248:              onClick={handleApply}
+frontend/src/pages\AIPlanner.jsx:249:              disabled={!selectedProject || loading}
+frontend/src/pages\AIPlanner.jsx:253:            </button>
+frontend/src/pages\AIPlanner.jsx:254:            <button
+frontend/src/pages\AIPlanner.jsx:255:              onClick={() => setStep('input')}
+frontend/src/pages\AIPlanner.jsx:259:            </button>
+frontend/src/pages\Profile.jsx:151:      <form onSubmit={handleSubmit} className="space-y-6">
+frontend/src/pages\Profile.jsx:194:                disabled
+frontend/src/pages\Profile.jsx:258:              <button
+frontend/src/pages\Profile.jsx:259:                type="button"
+frontend/src/pages\Profile.jsx:260:                onClick={handleAddSkill}
+frontend/src/pages\Profile.jsx:264:              </button>
+frontend/src/pages\Profile.jsx:275:                    <button
+frontend/src/pages\Profile.jsx:276:                      type="button"
+frontend/src/pages\Profile.jsx:277:                      onClick={() => handleRemoveSkill(skill)}
+frontend/src/pages\Profile.jsx:282:                    </button>
+frontend/src/pages\Profile.jsx:295:            <select
+frontend/src/pages\Profile.jsx:318:              <select
+frontend/src/pages\Profile.jsx:401:          <button
+frontend/src/pages\Profile.jsx:402:            type="button"
+frontend/src/pages\Profile.jsx:403:            onClick={() => {
+frontend/src/pages\Profile.jsx:417:            disabled={saving}
+frontend/src/pages\Profile.jsx:420:          </button>
+frontend/src/pages\Profile.jsx:421:          <button
+frontend/src/pages\Profile.jsx:424:            disabled={saving}
+frontend/src/pages\Profile.jsx:427:          </button>
+frontend/src/pages\auth\Register.jsx:60:      <form onSubmit={handleSubmit} className="space-y-4">
+frontend/src/pages\auth\Register.jsx:125:        <button
+frontend/src/pages\auth\Register.jsx:127:          disabled={loading}
+frontend/src/pages\auth\Register.jsx:131:        </button>
+frontend/src/pages\auth\Register.jsx:136:        <Link to="/login" className="text-primary-600 hover:text-primary-700 font-medium">
+frontend/src/pages\auth\GoogleCallback.jsx:182:            <button
+frontend/src/pages\auth\GoogleCallback.jsx:183:              onClick={() => navigate('/login')}
+frontend/src/pages\auth\GoogleCallback.jsx:187:            </button>
+frontend/src/pages\auth\Login.jsx:52:      <form onSubmit={handleSubmit} className="space-y-4">
+frontend/src/pages\auth\Login.jsx:74:            <Link
+frontend/src/pages\auth\Login.jsx:93:        <button
+frontend/src/pages\auth\Login.jsx:95:          disabled={loading}
+frontend/src/pages\auth\Login.jsx:99:        </button>
+frontend/src/pages\auth\Login.jsx:112:        href={`${BACKEND_URL}/api/auth/google`}
+frontend/src/pages\auth\Login.jsx:126:        <Link to="/register" className="text-primary-600 hover:text-primary-700 font-medium">
+frontend/src/pages\InvitationPage.jsx:79:          <Link to="/login" className="btn-primary inline-block">
+frontend/src/pages\InvitationPage.jsx:109:          <Link to="/projects" className="btn-primary inline-block">
+frontend/src/pages\InvitationPage.jsx:207:          <button
+frontend/src/pages\InvitationPage.jsx:208:            onClick={handleDecline}
+frontend/src/pages\InvitationPage.jsx:209:            disabled={processing}
+frontend/src/pages\InvitationPage.jsx:213:          </button>
+frontend/src/pages\InvitationPage.jsx:214:          <button
+frontend/src/pages\InvitationPage.jsx:215:            onClick={handleAccept}
+frontend/src/pages\InvitationPage.jsx:216:            disabled={processing}
+frontend/src/pages\InvitationPage.jsx:220:          </button>
+frontend/src/pages\InvitationPage.jsx:224:          <Link to="/projects" className="text-sm text-gray-600 hover:text-gray-900">
+frontend/src/pages\auth\ResetPassword.jsx:90:          <Link to="/forgot-password" className="btn-primary inline-block">
+frontend/src/pages\auth\ResetPassword.jsx:114:          <Link to="/login" className="btn-primary inline-block">
+frontend/src/pages\auth\ResetPassword.jsx:141:      <form onSubmit={handleSubmit} className="space-y-4">
+frontend/src/pages\auth\ResetPassword.jsx:155:            disabled={loading}
+frontend/src/pages\auth\ResetPassword.jsx:176:            disabled={loading}
+frontend/src/pages\auth\ResetPassword.jsx:181:        <button
+frontend/src/pages\auth\ResetPassword.jsx:183:          disabled={loading}
+frontend/src/pages\auth\ResetPassword.jsx:187:        </button>
+frontend/src/pages\auth\ResetPassword.jsx:192:        <Link to="/login" className="text-primary-600 hover:text-primary-700 font-medium">

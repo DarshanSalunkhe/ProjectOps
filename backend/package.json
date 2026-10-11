@@ -5,12 +5,13 @@
   "main": "server.js",
   "type": "module",
   "scripts": {
+    "build": "node --check server.js",
     "dev": "nodemon server.js",
     "start": "node server.js",
     "migrate": "node ../database/migrate.js",
     "seed": "node ../database/seeds/seed.js",
-    "test": "NODE_ENV=test jest --detectOpenHandles --forceExit",
-    "test:watch": "NODE_ENV=test jest --watch"
+    "test": "node --test ../scripts/audit/regressions.test.mjs ../scripts/audit/github-sync.test.mjs",
+    "test:watch": "node --test --watch ../scripts/audit/regressions.test.mjs"
   },
   "keywords": [],
   "author": "",

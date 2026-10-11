@@ -82,12 +82,12 @@ export const projectRepository = {
     return result.rows[0];
   },
 
-  async update(id, updates) {
+  async update(id, updates, client = null) {
     const fields = [];
     const values = [];
     let paramCount = 1;
 
-    const allowedFields = ['name', 'description', 'goal', 'status', 'start_date', 'deadline'];
+    const allowedFields = ['name', 'description', 'goal', 'status', 'start_date', 'deadline', 'github_repo_url'];
     
     allowedFields.forEach(field => {
       if (updates[field] !== undefined) {
@@ -102,7 +102,8 @@ export const projectRepository = {
     }
 
     values.push(id);
-    const result = await query(
+    const execute = client ? client.query.bind(client) : query;
+    const result = await execute(
       `UPDATE projects SET ${fields.join(', ')} 
        WHERE id = $${paramCount} 
        RETURNING *`,

@@ -1,0 +1,116 @@
+{
+  "initial": {
+    "windowY": 0,
+    "viewport": 844,
+    "header": {
+      "top": 0,
+      "bottom": 42,
+      "height": 42
+    },
+    "shell": {
+      "top": 0,
+      "bottom": 844,
+      "height": 844
+    },
+    "main": {
+      "top": 42,
+      "bottom": 844,
+      "height": 802
+    },
+    "assistant": {
+      "top": 42,
+      "bottom": 844,
+      "height": 802
+    },
+    "positions": {
+      ".reference-workspace": {
+        "top": 0,
+        "height": 844,
+        "scrollHeight": 844
+      },
+      ".workspace-frame": {
+        "top": 0,
+        "height": 802,
+        "scrollHeight": 802
+      },
+      ".workspace-main": {
+        "top": 0,
+        "height": 802,
+        "scrollHeight": 1684
+      },
+      ".workspace-sidebar": {
+        "top": 0,
+        "height": 802,
+        "scrollHeight": 802
+      },
+      ".workspace-assistant": {
+        "top": 0,
+        "height": 802,
+        "scrollHeight": 802
+      },
+      ".assistant-body": {
+        "top": 0,
+        "height": 601,
+        "scrollHeight": 601
+      },
+      ".chat-messages": null
+    }
+  },
+  "mounted": {
+    "windowY": 0,
+    "viewport": 844,
+    "header": {
+      "top": 0,
+      "bottom": 42,
+      "height": 42
+    },
+    "shell": {
+      "top": 0,
+      "bottom": 844,
+      "height": 844
+    },
+    "main": {
+      "top": 42,
+      "bottom": 844,
+      "height": 802
+    },
+    "assistant": {
+      "top": 42,
+      "bottom": 844,
+      "height": 802
+    },
+    "positions": {
+      ".reference-workspace": {
+        "top": 0,
+        "height": 844,
+        "scrollHeight": 844
+      },
+      ".workspace-frame": {
+        "top": 0,
+        "height": 802,
+        "scrollHeight": 802
+      },
+      ".workspace-main": {
+        "top": 0,
+        "height": 802,
+        "scrollHeight": 802
+      },
+      ".workspace-sidebar": {
+        "top": 0,
+        "height": 802,
+        "scrollHeight": 802
+      },
+      ".workspace-assistant": {
+        "top": 0,
+        "height": 802,
+        "scrollHeight": 802
+      },
+      ".assistant-body": {
+        "top": 0,
+        "height": 66,
+        "scrollHeight": 358
+      },
+      ".chat-messages": null
+    }
+  }
+}

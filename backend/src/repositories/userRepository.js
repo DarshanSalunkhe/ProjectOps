@@ -14,7 +14,7 @@ export const userRepository = {
       `SELECT id, name, email, role, google_id,
               profile_photo_url, bio, skills, experience_level,
               availability_status, weekly_capacity_hours, workload_hours,
-              created_at, updated_at
+              profile_visibility, created_at, updated_at
        FROM users WHERE id = $1`,
       [id]
     );
@@ -32,8 +32,9 @@ export const userRepository = {
   },
 
   async getAll() {
+    // Admin view: sort alphabetically by name (case-insensitive), id as stable secondary
     const result = await query(
-      'SELECT id, name, email, role, created_at, updated_at FROM users ORDER BY created_at DESC'
+      'SELECT id, name, email, role, profile_visibility, created_at, updated_at FROM users ORDER BY lower(name) ASC, id ASC'
     );
     return result.rows;
   },
@@ -91,7 +92,8 @@ export const userRepository = {
   async updateProfile(id, updates) {
     const allowedFields = [
       'name', 'email', 'profile_photo_url', 'bio', 'skills',
-      'experience_level', 'availability_status', 'weekly_capacity_hours'
+      'experience_level', 'availability_status', 'weekly_capacity_hours',
+      'profile_visibility'
     ];
 
     const fields = [];
@@ -116,7 +118,7 @@ export const userRepository = {
        WHERE id = $${paramCount}
        RETURNING id, name, email, role, profile_photo_url, bio, skills,
                  experience_level, availability_status, weekly_capacity_hours,
-                 workload_hours, created_at, updated_at`,
+                 workload_hours, profile_visibility, created_at, updated_at`,
       values
     );
     return result.rows[0];
@@ -130,5 +132,55 @@ export const userRepository = {
       [role, userId]
     );
     return result.rows[0];
+  },
+
+  async updateWorkload(userId, workloadHours, client = null) {
+    const execute = client ? client.query.bind(client) : query;
+    const result = await execute(
+      `UPDATE users SET workload_hours = $1, updated_at = NOW()
+       WHERE id = $2
+       RETURNING id, workload_hours`,
+      [workloadHours, userId]
+    );
+    return result.rows[0];
+  },
+
+  async findAll(requestingUserId = null) {
+    // Public profiles only in directory; admins see all
+    const result = await query(
+      `SELECT id, name, email, role, profile_photo_url, bio, skills,
+              experience_level, availability_status, weekly_capacity_hours,
+              workload_hours, profile_visibility, created_at, updated_at
+       FROM users
+       WHERE profile_visibility = 'PUBLIC' OR id = $1
+       ORDER BY lower(name) ASC, id ASC`,
+      [requestingUserId || 0]
+    );
+    return result.rows;
+  },
+
+  async findAllAdmin() {
+    // Admin: see all users regardless of visibility, alphabetically sorted
+    const result = await query(
+      `SELECT id, name, email, role, profile_photo_url, bio, skills,
+              experience_level, availability_status, weekly_capacity_hours,
+              workload_hours, profile_visibility, created_at, updated_at
+       FROM users ORDER BY lower(name) ASC, id ASC`
+    );
+    return result.rows;
+  },
+
+  async findAllByProject(projectId) {
+    const result = await query(
+      `SELECT u.id, u.name, u.email, u.role, u.profile_photo_url, u.bio, u.skills,
+              u.experience_level, u.availability_status, u.weekly_capacity_hours,
+              u.workload_hours, u.created_at, u.updated_at
+       FROM users u
+       INNER JOIN project_members pm ON pm.user_id = u.id
+       WHERE pm.project_id = $1
+       ORDER BY u.name ASC`,
+      [projectId]
+    );
+    return result.rows;
   }
 };

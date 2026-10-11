@@ -19,7 +19,9 @@ import ProjectMembers from './pages/ProjectMembers';
 import InvitationPage from './pages/InvitationPage';
 import Tasks from './pages/Tasks';
 import Team from './pages/Team';
+import Skills from './pages/Skills';
 import Risks from './pages/Risks';
+import AIPlanner from './pages/AIPlanner';
 import Settings from './pages/Settings';
 import Profile from './pages/Profile';
 import AdminUsers from './pages/AdminUsers';
@@ -54,7 +56,9 @@ function App() {
               <Route path="/projects/:id/members" element={<ProjectMembers />} />
               <Route path="/tasks" element={<Tasks />} />
               <Route path="/team" element={<Team />} />
+              <Route path="/skills" element={<Skills />} />
               <Route path="/risks" element={<Risks />} />
+              <Route path="/ai/planner" element={<AIPlanner />} />
               <Route path="/profile" element={<Profile />} />
               <Route path="/admin/users" element={<AdminUsers />} />
               <Route path="/settings" element={<Settings />} />

@@ -41,3 +41,8 @@ Thumbs.db
 .temp/
 tmp/
 .neon
+
+# Disposable functional-audit data and browser artifacts
+.audit/
+playwright-report/
+test-results/

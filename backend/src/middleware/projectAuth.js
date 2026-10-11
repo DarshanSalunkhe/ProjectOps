@@ -1,93 +1,151 @@
+import { AppError } from './errorHandler.js';
 import { projectMemberRepository } from '../repositories/projectMemberRepository.js';
-import { taskRepository } from '../repositories/taskRepository.js';
-import { AppError, asyncHandler } from './errorHandler.js';
+import pool from '../config/database.js';
 
 /**
- * Middleware to check if the authenticated user is a member of the project
- * Attaches the membership details to req.projectMember
+ * Middleware to verify user is a member of the project
+ * Expects projectId to be available in req.params.id, req.params.projectId, or req.body.project_id
  */
-export const requireProjectMember = asyncHandler(async (req, res, next) => {
-  // Extract project ID from params (supports both :id and :projectId)
-  const projectId = req.params.projectId || req.params.id;
-  const userId = req.user.id;
-
-  if (!projectId) {
-    throw new AppError('Project ID is required', 400);
-  }
-
-  // Check if user is a member of the project
-  const member = await projectMemberRepository.findByProjectAndUser(projectId, userId);
-
-  if (!member) {
-    throw new AppError('Access denied. You are not a member of this project.', 403);
-  }
-
-  // Attach member details to request for downstream use
-  req.projectMember = member;
-  next();
-});
-
-/**
- * Middleware to check if user has access to a task (via project membership)
- * Loads the task and checks project membership
- */
-export const requireTaskAccess = asyncHandler(async (req, res, next) => {
-  const taskId = req.params.taskId || req.params.id;
-  const userId = req.user.id;
-
-  if (!taskId) {
-    throw new AppError('Task ID is required', 400);
-  }
-
-  // Get the task to find its project_id
-  const task = await taskRepository.findById(taskId);
-
-  if (!task) {
-    throw new AppError('Task not found', 404);
-  }
-
-  // Check if user is a member of the task's project
-  const member = await projectMemberRepository.findByProjectAndUser(task.project_id, userId);
-
-  if (!member) {
-    throw new AppError('Access denied. You are not a member of this project.', 403);
-  }
-
-  // Attach task and member details to request
-  req.task = task;
-  req.projectMember = member;
-  next();
-});
-
-/**
- * Middleware to check if the user has specific role(s) in the project
- * Must be used after requireProjectMember or requireTaskAccess
- * 
- * @param {...string} roles - Allowed roles (e.g., 'OWNER', 'DEVELOPER')
- */
-export const requireProjectRole = (...roles) => {
-  return (req, res, next) => {
-    if (!req.projectMember) {
-      throw new AppError('Project membership check required before role check', 500);
-    }
-
-    if (!roles.includes(req.projectMember.role)) {
-      throw new AppError(
-        `Insufficient permissions. Required role: ${roles.join(' or ')}`,
-        403
+export const requireProjectMember = async (req, res, next) => {
+  try {
+    // Extract project ID from various sources
+    const projectId = req.params.id || req.params.projectId || req.body.project_id;
+    
+    // For task routes, get project_id from task
+    if (!projectId && req.params.taskId) {
+      const taskResult = await pool.query(
+        'SELECT project_id FROM tasks WHERE id = $1',
+        [req.params.taskId]
       );
+      if (taskResult.rows.length > 0) {
+        req.params.projectId = taskResult.rows[0].project_id;
+        return requireProjectMember(req, res, next);
+      }
     }
-
+    
+    if (!projectId) {
+      throw new AppError('Project ID required', 400);
+    }
+    
+    if (!req.user || !req.user.id) {
+      throw new AppError('User not authenticated', 401);
+    }
+    
+    // System admins have access to all projects
+    if (req.user.role === 'SYSTEM_ADMIN') {
+      req.projectRole = 'OWNER';
+      return next();
+    }
+    
+    // Check project membership
+    const membership = await projectMemberRepository.findByProjectAndUser(
+      parseInt(projectId),
+      req.user.id
+    );
+    
+    if (!membership) {
+      throw new AppError('You are not a member of this project', 403);
+    }
+    
+    // Attach project role to request
+    req.projectRole = membership.role;
+    req.projectMember = membership;
+    
     next();
-  };
+  } catch (error) {
+    next(error);
+  }
 };
 
 /**
- * Middleware specifically for OWNER-only actions
+ * Middleware to verify user is a developer or owner of the project
  */
-export const requireOwner = requireProjectRole('OWNER');
+export const requireDeveloperOrOwner = async (req, res, next) => {
+  if (!req.projectRole) {
+    return next(new AppError('Project membership not verified', 500));
+  }
+  
+  if (req.projectRole === 'VIEWER') {
+    return next(new AppError('This action requires DEVELOPER or OWNER role', 403));
+  }
+  
+  next();
+};
 
 /**
- * Middleware for actions allowed by OWNER and DEVELOPER
+ * Middleware to verify user is project owner
  */
-export const requireDeveloperOrOwner = requireProjectRole('OWNER', 'DEVELOPER');
+export const requireProjectOwner = async (req, res, next) => {
+  if (!req.projectRole) {
+    return next(new AppError('Project membership not verified', 500));
+  }
+  
+  if (req.projectRole !== 'OWNER') {
+    return next(new AppError('This action requires OWNER role', 403));
+  }
+  
+  next();
+};
+
+/**
+ * Middleware to verify user has access to a specific task via project membership
+ */
+export const requireTaskAccess = async (req, res, next) => {
+  try {
+    const taskId = req.params.id || req.params.taskId;
+    
+    if (!taskId) {
+      throw new AppError('Task ID required', 400);
+    }
+    
+    // Get task's project_id
+    const taskResult = await pool.query(
+      'SELECT project_id FROM tasks WHERE id = $1',
+      [taskId]
+    );
+    
+    if (taskResult.rows.length === 0) {
+      throw new AppError('Task not found', 404);
+    }
+    
+    const projectId = taskResult.rows[0].project_id;
+    req.params.projectId = projectId;
+    
+    // Use project membership check
+    return requireProjectMember(req, res, next);
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Middleware to verify user has access to a milestone via project membership
+ */
+export const requireMilestoneAccess = async (req, res, next) => {
+  try {
+    const milestoneId = req.params.id || req.params.milestoneId;
+    
+    if (!milestoneId) {
+      throw new AppError('Milestone ID required', 400);
+    }
+    
+    // Get milestone's project_id
+    const result = await pool.query(
+      'SELECT project_id FROM milestones WHERE id = $1',
+      [milestoneId]
+    );
+    
+    if (result.rows.length === 0) {
+      throw new AppError('Milestone not found', 404);
+    }
+    
+    const projectId = result.rows[0].project_id;
+    req.params.projectId = projectId;
+    
+    // Use project membership check
+    return requireProjectMember(req, res, next);
+  } catch (error) {
+    next(error);
+  }
+};
+

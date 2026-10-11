@@ -22,6 +22,16 @@ export const updateProject = asyncHandler(async (req, res) => {
   successResponse(res, project, 'Project updated successfully');
 });
 
+export const archiveProject = asyncHandler(async (req, res) => {
+  const project = await projectService.archiveProject(req.params.id);
+  successResponse(res, project, 'Project archived successfully');
+});
+
+export const restoreProject = asyncHandler(async (req, res) => {
+  const project = await projectService.restoreProject(req.params.id);
+  successResponse(res, project, 'Project restored successfully');
+});
+
 export const deleteProject = asyncHandler(async (req, res) => {
   const result = await projectService.deleteProject(req.params.id);
   successResponse(res, result, 'Project deleted successfully');

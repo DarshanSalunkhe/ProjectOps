@@ -273,14 +273,14 @@ const AdminUsers = () => {
                   setError('');
                 }}
                 className="btn-secondary"
-                disabled={updating}
+                aria-busy={updating} disabled={updating}
               >
                 Cancel
               </button>
               <button
                 onClick={handleRoleChange}
                 className="btn-primary"
-                disabled={updating || newRole === selectedUser.role}
+                aria-busy={updating} disabled={updating || newRole === selectedUser.role}
               >
                 {updating ? 'Updating...' : 'Update Role'}
               </button>

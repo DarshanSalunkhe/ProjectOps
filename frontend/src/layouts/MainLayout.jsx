@@ -1,6 +1,8 @@
-import { useEffect, useState } from 'react';
-import { Outlet, NavLink, useLocation } from 'react-router-dom';
+import { useEffect, useState, useRef } from 'react';
+import { Outlet, NavLink, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { projectService } from '../services/projectService';
+import WorkspaceAssistant from '../components/WorkspaceAssistant';
 import Avatar from '../components/Avatar';
 
 const icons = {
@@ -13,7 +15,8 @@ const icons = {
   profile: <><circle cx="12" cy="8" r="4" /><path d="M5 21a7 7 0 0 1 14 0" /></>,
   menu: <><path d="M4 7h16M4 12h16M4 17h16" /></>,
   close: <><path d="m6 6 12 12M18 6 6 18" /></>,
-  logout: <><path d="M10 17l5-5-5-5M15 12H3" /><path d="M12 3h6a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-6" /></>
+  logout: <><path d="M10 17l5-5-5-5M15 12H3" /><path d="M12 3h6a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-6" /></>,
+  ai: <><circle cx="12" cy="12" r="9" /><path d="M9 9h.01M15 9h.01" /><path d="M9 13.5c.6 1 1.8 1.5 3 1.5s2.4-.5 3-1.5" /><path d="M12 3v2M12 19v2M3 12H1M23 12h-2" /></>
 };
 
 const Icon = ({ name, className = '' }) => (
@@ -26,7 +29,41 @@ const MainLayout = () => {
   const { user, logout } = useAuth();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const location = useLocation();
+  const sidebarRef = useRef(null);
+  const mainRef = useRef(null);
+  const [collapsed, setCollapsed] = useState(() => localStorage.getItem('projectops-sidebar') === 'collapsed');
+  const [assistantOpen, setAssistantOpen] = useState(() => typeof window === 'undefined' || window.innerWidth >= 1024);
+  const [profileOpen, setProfileOpen] = useState(false);
+  const profileRef = useRef(null);
+  const [projects, setProjects] = useState([]);
+  const [projectError, setProjectError] = useState('');
+  const [query, setQuery] = useState('');
+  const [projectsOpen, setProjectsOpen] = useState(true);
+  useEffect(() => { let current = true; projectService.getAll().then(data => { if(current) { setProjects(data); setProjectError(''); } }).catch(() => { if(current) setProjectError('Projects unavailable'); }); return () => { current = false; }; }, [location.pathname]);
+  useEffect(() => { localStorage.setItem('projectops-sidebar', collapsed ? 'collapsed' : 'expanded'); }, [collapsed]);
+  useEffect(() => { const close = event => { if(event.key === 'Escape') setDrawerOpen(false); }; window.addEventListener('keydown', close); return () => window.removeEventListener('keydown', close); }, []);
+  // Close profile dropdown when clicking outside
+  useEffect(() => {
+    const handler = (e) => { if (profileRef.current && !profileRef.current.contains(e.target)) setProfileOpen(false); };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
 
+  useEffect(() => {
+    if (!drawerOpen) return;
+    const previous = document.activeElement;
+    const panel = sidebarRef.current;
+    const focusable = () => [...panel.querySelectorAll('a,button,input')].filter(el => el.getClientRects().length);
+    focusable()[0]?.focus({ preventScroll: true });
+    const trap = event => {
+      if(event.key !== 'Tab') return;
+      const items = focusable(), first = items[0], last = items[items.length - 1];
+      if(event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus({ preventScroll: true }); }
+      else if(!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus({ preventScroll: true }); }
+    };
+    panel.addEventListener('keydown', trap);
+    return () => { panel.removeEventListener('keydown', trap); previous?.focus({ preventScroll: true }); };
+  }, [drawerOpen]);
   const navItems = [
     { path: '/dashboard', label: 'Overview', icon: 'dashboard', roles: ['all'] },
     { path: '/projects', label: 'Projects', icon: 'projects', roles: ['all'] },
@@ -34,10 +71,17 @@ const MainLayout = () => {
     { path: '/team', label: 'Team', icon: 'team', roles: ['all'] },
     { path: '/risks', label: 'Risks', icon: 'risks', roles: ['all'] },
     { path: '/admin/users', label: 'Admin', icon: 'admin', roles: ['SYSTEM_ADMIN'] },
+    { path: '/ai/planner', label: 'AI Planner', icon: 'dashboard', roles: ['all'] },
+    { path: '/skills', label: 'Skills', icon: 'tasks', roles: ['all'] },
+    { path: '/settings', label: 'Settings', icon: 'profile', roles: ['all'] },
     { path: '/profile', label: 'Profile', icon: 'profile', roles: ['all'] }
   ];
 
-  useEffect(() => setDrawerOpen(false), [location.pathname]);
+  useEffect(() => {
+    setDrawerOpen(false);
+    // New route content starts at the top of its own panel; sidebar scroll is retained.
+    mainRef.current?.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+  }, [location.pathname, location.search]);
 
   const visibleNavItems = navItems.filter(
     (item) =>
@@ -45,73 +89,91 @@ const MainLayout = () => {
       (user && item.roles.includes(user.role))
   );
 
+  const currentProject = projects.find(project => String(project.id) === location.pathname.match(/^\/projects\/([^/]+)/)?.[1]);
+  const filteredProjects = projects.filter(project => project.name.toLowerCase().includes(query.toLowerCase()));
   return (
-    <div className="min-h-screen bg-[#f4f6fa]">
+    <div className={`workspace-app reference-workspace ${collapsed ? 'sidebar-collapsed' : ''}`}>
+      <a className="skip-link" href="#main-content">Skip to content</a>
       <header className="workspace-header">
-        <div className="flex h-[72px] items-center justify-between px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-3">
-            <button type="button" onClick={() => setDrawerOpen(!drawerOpen)} className="icon-button lg:hidden" aria-label={drawerOpen ? 'Close navigation menu' : 'Open navigation menu'} aria-expanded={drawerOpen}>
-              <Icon name={drawerOpen ? 'close' : 'menu'} className="h-5 w-5" />
+        <div className="workspace-brand"><button className="mini-button mobile-menu" onClick={() => setDrawerOpen(!drawerOpen)} aria-label="Open navigation" aria-expanded={drawerOpen}><Icon name="menu" /></button><img src="/projectops-icon.svg" alt="" width={23} height={23} /><span>ProjectOps</span><span className="brand-chevron">⌄</span></div>
+        <div className="workspace-search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true"><circle cx="10" cy="10" r="6" /><path d="m15 15 5 5" /></svg><input type="search" aria-label="Search workspace projects" placeholder="Search projects…" value={query} onChange={e => {setQuery(e.target.value); setCollapsed(false); setProjectsOpen(true);}} />{query && <div className="workspace-search-results">{filteredProjects.length ? filteredProjects.map(project => <NavLink key={project.id} to={'/projects/'+project.id+'?tab=tasks'} onClick={() => setQuery('')}>{project.name}</NavLink>) : <p>No matching projects</p>}</div>}</div>
+        <div className="workspace-header-actions"><button className={`assistant-toggle ${assistantOpen ? 'is-active' : ''}`} aria-expanded={assistantOpen} onClick={() => setAssistantOpen(!assistantOpen)} aria-label="Toggle AI assistant"><Icon name="ai" className="assistant-toggle-icon" /><span className="assistant-toggle-label">AI assistant</span></button>
+          {/* Profile dropdown */}
+          <div ref={profileRef} className="profile-menu-wrap">
+            <button
+              className="profile-menu-trigger"
+              onClick={() => setProfileOpen(v => !v)}
+              aria-expanded={profileOpen}
+              aria-label="Account menu"
+            >
+              <Avatar user={user} size="sm" />
             </button>
-            <div className="flex items-center gap-3 lg:hidden">
-              <span className="brand-mark">P</span>
-              <span className="text-base font-bold tracking-tight text-slate-900">ProjectOps</span>
-            </div>
-            <div className="hidden text-sm text-slate-500 lg:block">Workspace <span className="px-1.5 text-slate-300">/</span> <span className="font-medium text-slate-800">{navItems.find(item => item.path === location.pathname)?.label || 'Project'}</span></div>
-          </div>
-          <div className="flex items-center gap-3 sm:gap-5">
-            <div className="hidden text-right sm:block">
-              <p className="text-sm font-semibold text-slate-800">{user?.name}</p>
-              <p className="text-[11px] font-medium uppercase tracking-wide text-slate-500">{user?.role?.replaceAll('_', ' ')}</p>
-            </div>
-            <Avatar user={user} size="sm" />
-            <button onClick={logout} className="header-logout" title="Log out"><Icon name="logout" className="h-4 w-4" /><span className="hidden sm:inline">Log out</span></button>
+            {profileOpen && (
+              <div className="profile-dropdown" role="menu">
+                <div className="profile-dropdown-header">
+                  <Avatar user={user} size="md" />
+                  <div className="profile-dropdown-info">
+                    <p className="profile-dropdown-name">{user?.name}</p>
+                    <p className="profile-dropdown-email">{user?.email}</p>
+                  </div>
+                </div>
+                <div className="profile-dropdown-divider" />
+                <Link
+                  to="/profile"
+                  className="profile-dropdown-item"
+                  role="menuitem"
+                  onClick={() => setProfileOpen(false)}
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M5 21a7 7 0 0 1 14 0"/></svg>
+                  View profile
+                </Link>
+                <Link
+                  to="/settings"
+                  className="profile-dropdown-item"
+                  role="menuitem"
+                  onClick={() => setProfileOpen(false)}
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
+                  Settings
+                </Link>
+                <div className="profile-dropdown-divider" />
+                <button
+                  className="profile-dropdown-item profile-dropdown-logout"
+                  role="menuitem"
+                  onClick={() => { setProfileOpen(false); logout(); }}
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M10 17l5-5-5-5M15 12H3"/><path d="M12 3h6a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-6"/></svg>
+                  Log out
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </header>
-
       <div className="workspace-frame">
-        {drawerOpen && <button className="drawer-scrim lg:hidden" onClick={() => setDrawerOpen(false)} aria-label="Close navigation" />}
-        <aside className={`workspace-sidebar ${drawerOpen ? 'workspace-sidebar-open' : ''}`}>
-          <div className="hidden items-center gap-3 px-6 pb-8 pt-7 lg:flex">
-            <span className="brand-mark">P</span>
-            <div><div className="text-lg font-bold tracking-tight text-white">ProjectOps</div><div className="mt-0.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400">Work, in focus</div></div>
-          </div>
-          <div className="px-4 pb-2 pt-6 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500 lg:pt-0">Workspace</div>
-          <nav className="space-y-1 px-3">
-            {visibleNavItems.map((item) => (
-              <NavLink
-                key={item.path}
-                to={item.path}
-                className={({ isActive }) =>
-                  `sidebar-link ${
-                    isActive
-                      ? 'sidebar-link-active'
-                      : ''
-                  }`
-                }
-              >
-                <Icon name={item.icon} className="h-[18px] w-[18px]" />
-                <span>{item.label}</span>
-              </NavLink>
-            ))}
+        <nav className="workspace-rail" aria-label="Apps">
+          <NavLink to="/projects" title="Projects" className={({isActive}) => 'rail-link ' + (isActive ? 'is-active' : '')}><Icon name="projects" /><span>Projects</span></NavLink>
+          <NavLink to="/tasks" title="Your work" className={({isActive}) => 'rail-link ' + (isActive ? 'is-active' : '')}><Icon name="tasks" /><span>Work</span></NavLink>
+          <NavLink to="/ai/planner" title="AI Planner" className={({isActive}) => 'rail-link ' + (isActive ? 'is-active' : '')}><Icon name="dashboard" /><span>AI</span></NavLink>
+          <NavLink to="/team" title="Team" className={({isActive}) => 'rail-link ' + (isActive ? 'is-active' : '')}><Icon name="team" /><span>Team</span></NavLink>
+          <NavLink to="/settings" title="Settings" className={({isActive}) => 'rail-link rail-settings ' + (isActive ? 'is-active' : '')}><Icon name="admin" /><span>Settings</span></NavLink>
+          <button className="rail-link rail-collapse" onClick={() => setCollapsed(!collapsed)} aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'} aria-expanded={!collapsed}><Icon name="menu" /></button>
+        </nav>
+        {drawerOpen && <button className="drawer-scrim" onClick={() => setDrawerOpen(false)} aria-label="Close navigation" />}
+        <aside ref={sidebarRef} className={`workspace-sidebar ${drawerOpen ? 'workspace-sidebar-open' : ''}`}>
+          <div className="sidebar-heading"><strong>Projects</strong><button className="mini-button desktop-collapse" onClick={() => setCollapsed(true)} aria-label="Collapse sidebar"><Icon name="menu" /></button><button className="mini-button mobile-menu" onClick={() => setDrawerOpen(false)} aria-label="Close navigation">×</button></div>
+          <NavLink onClick={() => setDrawerOpen(false)} className="sidebar-quick-action" to={currentProject ? '/projects/'+currentProject.id+'?tab=tasks' : '/tasks'}>⊕ <span>Work items</span></NavLink>
+          <nav className="sidebar-navigation" aria-label="Workspace navigation">
+            <p className="sidebar-section-label">Workspace <span>⌄</span></p>
+            {visibleNavItems.map(item => <NavLink key={item.path} to={item.path} onClick={() => setDrawerOpen(false)} title={item.label} className={({isActive}) => 'sidebar-link ' + (isActive ? 'sidebar-link-active' : '')}><Icon name={item.icon} /><span>{item.label}</span></NavLink>)}
           </nav>
-          <div className="mt-auto border-t border-white/10 p-4">
-            <div className="flex items-center gap-3 rounded-xl bg-white/[0.06] p-3">
-              <Avatar user={user} size="sm" />
-              <div className="min-w-0"><p className="truncate text-sm font-semibold text-white">{user?.name}</p><p className="truncate text-xs text-slate-400">{user?.role?.replaceAll('_', ' ')}</p></div>
-            </div>
-          </div>
+          <section className="sidebar-projects"><button className="sidebar-section-label" onClick={() => setProjectsOpen(!projectsOpen)} aria-expanded={projectsOpen}>Projects <span>{projectsOpen ? '⌄' : '›'}</span></button>{projectsOpen && <div>{projectError ? <p role="alert" className="sidebar-empty">{projectError}</p> : filteredProjects.map(project => <NavLink key={project.id} to={'/projects/'+project.id+'?tab=tasks'} onClick={() => setDrawerOpen(false)} className={({isActive}) => 'sidebar-link sidebar-project ' + (isActive ? 'sidebar-link-active' : '')}><span className="project-glyph">▧</span><span className="truncate">{project.name}</span></NavLink>)}{!projectError && !filteredProjects.length && <p className="sidebar-empty">{query ? 'No matching projects' : 'No projects yet'}</p>}</div>}</section>
+          <div className="sidebar-footer"><span className="workspace-plan">▧ Workspace</span><button className="mini-button" onClick={logout} aria-label="Log out" title="Log out"><Icon name="logout" /></button></div>
         </aside>
-
-        <main className="workspace-main min-w-0 flex-1 px-4 py-6 sm:px-6 sm:py-8 lg:px-10 lg:py-9">
-          <div className="mx-auto w-full max-w-[1480px]">
-            <Outlet />
-          </div>
-        </main>
+        <main ref={mainRef} id="main-content" tabIndex={-1} className="workspace-main"><Outlet /></main>
+        {assistantOpen && <WorkspaceAssistant project={currentProject} onClose={() => setAssistantOpen(false)} />}
       </div>
     </div>
   );
 };
-
 export default MainLayout;

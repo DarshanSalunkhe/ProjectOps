@@ -24,5 +24,15 @@ export const projectService = {
   async delete(id) {
     const response = await api.delete(`/projects/${id}`);
     return response.data;
+  },
+
+  async archive(id) {
+    const response = await api.post(`/projects/${id}/archive`);
+    return response.data;
+  },
+
+  async restore(id) {
+    const response = await api.post(`/projects/${id}/restore`);
+    return response.data;
   }
 };

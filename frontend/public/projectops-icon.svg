@@ -1,0 +1,45 @@
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  width="64"
+  height="64"
+  viewBox="0 0 64 64"
+  role="img"
+  aria-labelledby="title"
+>
+  <title id="title">ProjectOps icon</title>
+  <defs>
+    <linearGradient id="brand" x1="0%" y1="0%" x2="70%" y2="100%">
+      <stop offset="0%" stop-color="#159BFF"/>
+      <stop offset="40%" stop-color="#00D7E8"/>
+      <stop offset="100%" stop-color="#883BFF"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="12" fill="#081225"/>
+  <!-- One solid P with an open counter and integrated node -->
+  <path
+    fill="url(#brand)"
+    fill-rule="evenodd"
+    d="
+      M14 9
+      H34
+      C47 9 54 16 54 27
+      C54 38 47 45 34 45
+      H22
+      V54
+      Q22 57 19 57
+      H14
+      Q11 57 11 54
+      V20
+      C8 19 7 16 7 13
+      C7 9 10 6 14 6
+      C17 6 20 7 21 9
+      Z
+      M22 19
+      V35
+      H34
+      C41 35 44 32 44 27
+      C44 22 41 19 34 19
+      Z
+    "
+  />
+</svg>

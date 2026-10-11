@@ -17,6 +17,11 @@
     "build": "npm run build:backend && npm run build:frontend",
     "test:backend": "npm test --prefix backend",
     "test:frontend": "npm test --prefix frontend",
+    "audit:unit": "node --test scripts/audit/regressions.test.mjs",
+    "audit:browser": "playwright test --config=scripts/audit/playwright.config.mjs",
+    "audit:setup": "node scripts/audit/setup.mjs",
+    "audit:check-db": "node scripts/audit/check-environment.mjs",
+    "audit:inventory": "node scripts/audit/inventory-controls.mjs",
     "test": "npm run test:backend && npm run test:frontend"
   },
   "keywords": [
@@ -28,6 +33,7 @@
   "author": "",
   "license": "MIT",
   "devDependencies": {
+    "@playwright/test": "^1.64.0",
     "concurrently": "^8.2.2"
   }
 }

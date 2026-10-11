@@ -1,0 +1,46 @@
+{
+  "id": "FEAT-001",
+  "type": "feat",
+  "description": "Phase B: Tasks, Assignment, and Team Features. Implement AI-assisted task generation with preview, task assignment flow with intelligent recommendations, milestone contribution points, and skills integration into profiles and assignment UI. Independent of other features.",
+  "status": "pending",
+  "steps": [
+    "1. Apply migrations 016-019 if not already applied: cd database && node ../database/migrate.js. Verify migrations in database.",
+    "2. Update backend/src/repositories/taskRepository.js: add findByUser method to get tasks assigned to a user across all their projects.",
+    "3. Update backend/src/controllers/taskController.js and routes: add POST /api/tasks/:id/assign endpoint that validates project membership, prevents non-member assignment, creates assignment, logs activity via activityRepository. Apply requireTaskAccess and requireDeveloperOrOwner middleware.",
+    "4. Create backend/src/controllers/assignmentController.js: implement GET /api/tasks/:taskId/recommendations endpoint that uses skillMatchingService.findBestMatchesForTask with project membership filter. Each recommendation includes user, match_score, explanation, matching_skills, missing_skills, capacity_score, available_hours.",
+    "5. Create backend/src/routes/assignmentRoutes.js, register in backend/src/routes/index.js, protect with requireAuth and requireTaskAccess middleware.",
+    "6. Update backend/src/controllers/milestoneController.js: add POST /api/milestones/:id/contributions endpoint to award/edit points. Validate: only project owner can award, no duplicate awards in same request. Store as JSONB array [{user_id, points, feedback, awarded_by, awarded_at}]. Apply requireMilestoneAccess and requireProjectOwner middleware.",
+    "7. Create frontend/src/components/TaskAssignment.jsx: modal with member selector dropdown (filtered to project members), deadline date picker, priority select, notes textarea. On save, POST /api/tasks/:id/assign. Show assignment history below form.",
+    "8. Create frontend/src/components/AssignmentRecommendations.jsx: fetch GET /api/tasks/:taskId/recommendations, display ranked list with match score, skill match breakdown, capacity info, and explanation. 'Assign' button for each recommendation opens TaskAssignment modal with pre-filled user.",
+    "9. Update frontend/src/pages/AIPlanner.jsx: add 'Edit Plan' button in preview step. Allow editing task titles, descriptions, priorities, hours before applying. Add duplicate detection by comparing normalized titles with existing project tasks (case-insensitive). Add dependency cycle validation using DFS on generated plan dependencies before allowing apply.",
+    "10. Update frontend/src/pages/ProjectDetail.jsx: in task creation modal, add 'acceptance_criteria' textarea field. When saving, include in POST /api/projects/:projectId/tasks body.",
+    "11. Create frontend/src/components/MilestoneScoring.jsx: shown only to project owner on milestone detail. List project members, input fields for points (number) and feedback (text). On submit, POST /api/milestones/:id/contributions with array of awards. Display scoring history with awarded_by and awarded_at.",
+    "12. Update frontend/src/pages/Skills.jsx: remove standalone Skills page from navigation. Merge skill proficiency editor into frontend/src/pages/Profile.jsx. Add skills display to TaskAssignment and AssignmentRecommendations components showing required vs actual skills.",
+    "13. Update backend/src/services/aiPlannerService.js applyPlan method: before creating tasks, check for existing tasks with same normalized title in project. Skip or prompt on duplicates. Validate dependencies array has no cycles using topological sort before creating any tasks.",
+    "14. Integrate activityRepository logging in all new endpoints: log 'ASSIGNED' action for task assignments, 'CREATED' for tasks from plan application, 'COMPLETED' for milestone scoring."
+  ],
+  "acceptance_criteria": [
+    "Migrations 016-019 successfully applied and verified in database",
+    "Task assignment endpoint validates project membership and prevents non-member assignment",
+    "Assignment recommendations endpoint returns ranked users with match scores and explanations",
+    "Milestone contribution points can be awarded by project owner only, stored in contributions JSONB column",
+    "AI planner shows editable preview, detects duplicate task titles, validates no dependency cycles",
+    "Task creation form includes acceptance_criteria field",
+    "Skills editor merged into Profile page, Skills page removed from navigation",
+    "Assignment UI shows skill match information and capacity",
+    "All assignment, plan application, and scoring actions logged to activity_log table"
+  ],
+  "verification": [
+    "Run npm run audit:unit to verify backend unit tests pass",
+    "Start dev servers with npm run dev",
+    "Create a task with acceptance criteria, verify saved in database: psql $DATABASE_URL -c 'SELECT id, title, acceptance_criteria FROM tasks ORDER BY id DESC LIMIT 5'",
+    "Generate a plan in AI Planner, edit tasks, verify duplicate detection prevents applying if task titles match existing tasks",
+    "Assign a task to a project member, verify POST /api/tasks/:id/assign succeeds and assignment appears in database",
+    "Get assignment recommendations for a task, verify GET /api/tasks/:taskId/recommendations returns users with match scores",
+    "Award contribution points to a milestone as project owner, verify POST /api/milestones/:id/contributions saves to contributions column",
+    "Verify Skills page removed from main navigation, skills editor present in Profile page",
+    "Check activity_log table for ASSIGNED, CREATED, COMPLETED actions: psql $DATABASE_URL -c 'SELECT action_type, entity_type, description FROM activity_log ORDER BY created_at DESC LIMIT 10'"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

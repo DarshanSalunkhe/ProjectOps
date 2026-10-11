@@ -1,0 +1,242 @@
+{
+  "initial": {
+    "windowY": 0,
+    "viewport": 844,
+    "header": {
+      "top": 0,
+      "bottom": 42,
+      "height": 42
+    },
+    "shell": {
+      "top": 0,
+      "bottom": 844,
+      "height": 844
+    },
+    "main": {
+      "top": 42,
+      "bottom": 844,
+      "height": 802
+    },
+    "assistant": {
+      "top": 42,
+      "bottom": 844,
+      "height": 802
+    },
+    "positions": {
+      ".reference-workspace": {
+        "top": 0,
+        "height": 844,
+        "scrollHeight": 844
+      },
+      ".workspace-frame": {
+        "top": 0,
+        "height": 802,
+        "scrollHeight": 802
+      },
+      ".workspace-main": {
+        "top": 0,
+        "height": 802,
+        "scrollHeight": 1385
+      },
+      ".workspace-sidebar": {
+        "top": 0,
+        "height": 802,
+        "scrollHeight": 802
+      },
+      ".workspace-assistant": {
+        "top": 0,
+        "height": 802,
+        "scrollHeight": 802
+      },
+      ".assistant-body": {
+        "top": 0,
+        "height": 601,
+        "scrollHeight": 601
+      },
+      ".chat-messages": null
+    }
+  },
+  "mounted": {
+    "windowY": 0,
+    "viewport": 844,
+    "header": {
+      "top": 0,
+      "bottom": 42,
+      "height": 42
+    },
+    "shell": {
+      "top": 0,
+      "bottom": 844,
+      "height": 844
+    },
+    "main": {
+      "top": 42,
+      "bottom": 844,
+      "height": 802
+    },
+    "assistant": {
+      "top": 42,
+      "bottom": 844,
+      "height": 802
+    },
+    "positions": {
+      ".reference-workspace": {
+        "top": 0,
+        "height": 844,
+        "scrollHeight": 844
+      },
+      ".workspace-frame": {
+        "top": 0,
+        "height": 802,
+        "scrollHeight": 802
+      },
+      ".workspace-main": {
+        "top": 0,
+        "height": 802,
+        "scrollHeight": 802
+      },
+      ".workspace-sidebar": {
+        "top": 0,
+        "height": 802,
+        "scrollHeight": 802
+      },
+      ".workspace-assistant": {
+        "top": 0,
+        "height": 802,
+        "scrollHeight": 802
+      },
+      ".assistant-body": {
+        "top": 0,
+        "height": 601,
+        "scrollHeight": 893
+      },
+      ".chat-messages": {
+        "top": 0,
+        "height": 250,
+        "scrollHeight": 250
+      }
+    }
+  },
+  "afterSend": {
+    "windowY": 0,
+    "viewport": 844,
+    "header": {
+      "top": 0,
+      "bottom": 42,
+      "height": 42
+    },
+    "shell": {
+      "top": 0,
+      "bottom": 844,
+      "height": 844
+    },
+    "main": {
+      "top": 42,
+      "bottom": 844,
+      "height": 802
+    },
+    "assistant": {
+      "top": 42,
+      "bottom": 844,
+      "height": 802
+    },
+    "positions": {
+      ".reference-workspace": {
+        "top": 0,
+        "height": 844,
+        "scrollHeight": 844
+      },
+      ".workspace-frame": {
+        "top": 0,
+        "height": 802,
+        "scrollHeight": 802
+      },
+      ".workspace-main": {
+        "top": 0,
+        "height": 802,
+        "scrollHeight": 802
+      },
+      ".workspace-sidebar": {
+        "top": 0,
+        "height": 802,
+        "scrollHeight": 802
+      },
+      ".workspace-assistant": {
+        "top": 0,
+        "height": 802,
+        "scrollHeight": 802
+      },
+      ".assistant-body": {
+        "top": 292,
+        "height": 601,
+        "scrollHeight": 893
+      },
+      ".chat-messages": {
+        "top": 2166,
+        "height": 398,
+        "scrollHeight": 2564
+      }
+    }
+  },
+  "final": {
+    "windowY": 0,
+    "viewport": 844,
+    "header": {
+      "top": 0,
+      "bottom": 42,
+      "height": 42
+    },
+    "shell": {
+      "top": 0,
+      "bottom": 844,
+      "height": 844
+    },
+    "main": {
+      "top": 42,
+      "bottom": 844,
+      "height": 802
+    },
+    "assistant": {
+      "top": 42,
+      "bottom": 844,
+      "height": 802
+    },
+    "positions": {
+      ".reference-workspace": {
+        "top": 0,
+        "height": 844,
+        "scrollHeight": 844
+      },
+      ".workspace-frame": {
+        "top": 0,
+        "height": 802,
+        "scrollHeight": 802
+      },
+      ".workspace-main": {
+        "top": 0,
+        "height": 802,
+        "scrollHeight": 802
+      },
+      ".workspace-sidebar": {
+        "top": 0,
+        "height": 802,
+        "scrollHeight": 802
+      },
+      ".workspace-assistant": {
+        "top": 0,
+        "height": 802,
+        "scrollHeight": 802
+      },
+      ".assistant-body": {
+        "top": 0,
+        "height": 601,
+        "scrollHeight": 893
+      },
+      ".chat-messages": {
+        "top": 0,
+        "height": 250,
+        "scrollHeight": 250
+      }
+    }
+  }
+}

@@ -7,7 +7,9 @@ const TASK_PRIORITIES = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'];
 export const createTaskValidation = [
   body('project_id')
     .isInt({ min: 1 })
-    .withMessage('Valid project ID is required'),
+    .withMessage('Valid project ID is required')
+    .custom((value, { req }) => String(value) === String(req.params.projectId))
+    .withMessage('Project ID must match the route project'),
   
   body('title')
     .trim()
@@ -52,7 +54,7 @@ export const updateTaskValidation = [
   enumValidation('priority', TASK_PRIORITIES),
   
   body('estimated_hours')
-    .optional()
+    .optional({ nullable: true })
     .isFloat({ min: 0 })
     .withMessage('Estimated hours must be a positive number'),
   
@@ -61,7 +63,7 @@ export const updateTaskValidation = [
     .isFloat({ min: 0 })
     .withMessage('Actual hours must be a positive number'),
   
-  dateValidation('deadline'),
+  body('deadline').optional({ nullable: true }).isISO8601().withMessage('deadline must be a valid date'),
   
   validate
 ];

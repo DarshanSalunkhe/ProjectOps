@@ -1,9 +1,23 @@
 import { useState, useEffect } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useParams, Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { projectService } from '../services/projectService';
 import { taskService } from '../services/taskService';
 import { membershipService } from '../services/membershipService';
+import { milestoneService } from '../services/milestoneService';
 import { useAuth } from '../context/AuthContext';
+import {
+  TabNav,
+  MilestonesTab,
+  ActivityTab,
+  RepositoryTab,
+  DependenciesTab,
+  TimelineTab,
+  AssignmentsTab,
+  ChatTab
+} from '../components/ProjectTabs';
+import RecoveryWorkspace from '../components/RecoveryWorkspace';
+import { TaskCard } from '../components/TaskCard';
+import { AICommandCenter } from '../components/AICommandCenter';
 
 const ProjectDetail = () => {
   const { id } = useParams();
@@ -12,8 +26,14 @@ const ProjectDetail = () => {
   const [project, setProject] = useState(null);
   const [tasks, setTasks] = useState([]);
   const [members, setMembers] = useState([]);
+  const [milestones, setMilestones] = useState([]);
   const [userRole, setUserRole] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeTab = ['overview','ai','tasks','dependencies','assignments','timeline','milestones','repository','activity','chat','recovery'].includes(searchParams.get('tab')) ? searchParams.get('tab') : 'tasks';
+  const setActiveTab = tab => setSearchParams({tab});
+  const [taskView, setTaskView] = useState('board');
+  const [taskQuery, setTaskQuery] = useState('');
   const [showTaskModal, setShowTaskModal] = useState(false);
   const [taskFormData, setTaskFormData] = useState({
     title: '',
@@ -21,10 +41,28 @@ const ProjectDetail = () => {
     status: 'TODO',
     priority: 'MEDIUM',
     estimated_hours: '',
-    deadline: ''
+    deadline: '',
+    required_skills: []
   });
+  const [skillInput, setSkillInput] = useState('');
+  const [skillProficiency, setSkillProficiency] = useState('INTERMEDIATE');
+  const [skillMandatory, setSkillMandatory] = useState(true);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+
+  const tabs = [
+    { id: 'overview', label: 'Overview' },
+    { id: 'ai', label: 'AI Command' },
+    { id: 'tasks', label: 'Work items' },
+    { id: 'dependencies', label: 'Dependencies' },
+    { id: 'assignments', label: 'Assignments' },
+    { id: 'timeline', label: 'Timeline' },
+    { id: 'milestones', label: 'Milestones' },
+    { id: 'recovery', label: 'Recovery' },
+    { id: 'repository', label: 'GitHub Repository' },
+    { id: 'activity', label: 'Activity' },
+    { id: 'chat', label: 'AI Chat' }
+  ];
 
   useEffect(() => {
     fetchProjectData();
@@ -40,22 +78,82 @@ const ProjectDetail = () => {
       setProject(projectData);
       setTasks(tasksData);
       setMembers(membersData.members || []);
-      
-      // Find current user's role by matching email with members
-      if (user && user.email) {
-        const currentUserMember = membersData.members?.find(
-          m => m.user_email?.toLowerCase() === user.email.toLowerCase()
-        );
-        
-        if (currentUserMember) {
-          setUserRole(currentUserMember.role);
-        }
+      window.dispatchEvent(new CustomEvent('projectops:project-updated', { detail: { projectId: id } }));
+
+      // Fetch milestones
+      try {
+        const milestonesData = await milestoneService.getByProject(id);
+        setMilestones(Array.isArray(milestonesData) ? milestonesData : []);
+      } catch (err) {
+        // Milestones not critical - set empty array
+        console.error('Failed to load milestones:', err);
+        setMilestones([]);
       }
+
+      // Match membership by stable account ID; admins have owner access in the backend.
+      const currentUserMember = membersData.members?.find(
+        m => String(m.user_id) === String(user?.id)
+      );
+      setUserRole(user?.role === 'SYSTEM_ADMIN' ? 'OWNER' : currentUserMember?.role || null);
     } catch (error) {
       console.error('Failed to fetch project data:', error);
+      setError('Failed to load project');
     } finally {
       setLoading(false);
     }
+  };
+
+  useEffect(() => {
+    if (!project?.github_repo_url) return;
+    let current = true, checking = false;
+    const refresh = async () => {
+      if (!current || checking || document.visibilityState !== 'visible') return;
+      checking = true;
+      try {
+        // Read ProjectOps data only; webhook-driven GitHub activity is never polled.
+        const latest = await projectService.getById(id);
+        if (current && latest.updated_at !== project.updated_at) await fetchProjectData();
+      } catch { /* Existing visible controls retain their error/retry behavior. */ }
+      finally { checking = false; }
+    };
+    const timer = setInterval(refresh, 30000);
+    document.addEventListener('visibilitychange', refresh);
+    return () => { current = false; clearInterval(timer); document.removeEventListener('visibilitychange', refresh); };
+  }, [id, project?.github_repo_url, project?.updated_at]);
+
+  const handleAddSkill = () => {
+    if (!skillInput.trim()) return;
+
+    const normalizedSkill = skillInput.trim().toLowerCase();
+
+    if (taskFormData.required_skills.some(s => s.skill_name === normalizedSkill)) {
+      setError('Skill already added');
+      setTimeout(() => setError(''), 3000);
+      return;
+    }
+
+    setTaskFormData({
+      ...taskFormData,
+      required_skills: [
+        ...taskFormData.required_skills,
+        {
+          skill_name: normalizedSkill,
+          required_proficiency: skillProficiency,
+          is_mandatory: skillMandatory
+        }
+      ]
+    });
+
+    setSkillInput('');
+    setSkillProficiency('INTERMEDIATE');
+    setSkillMandatory(true);
+  };
+
+  const handleRemoveSkill = (skillName) => {
+    setTaskFormData({
+      ...taskFormData,
+      required_skills: taskFormData.required_skills.filter(s => s.skill_name !== skillName)
+    });
   };
 
   const handleCreateTask = async (e) => {
@@ -71,15 +169,30 @@ const ProjectDetail = () => {
         status: 'TODO',
         priority: 'MEDIUM',
         estimated_hours: '',
-        deadline: ''
+        deadline: '',
+        required_skills: []
       });
+      setSkillInput('');
+      setSkillProficiency('INTERMEDIATE');
+      setSkillMandatory(true);
       fetchProjectData();
     } catch (err) {
       setError(err.message || 'Failed to create task');
     }
   };
 
-  const handleDeleteProject = async () => {
+  const handleArchive = async () => {
+    if (!window.confirm('Archive this project? You can restore it later.')) return;
+    try {
+      await projectService.archive(id);
+      setSuccess('Project archived successfully');
+      setTimeout(() => navigate('/projects'), 1500);
+    } catch (err) {
+      setError(err.message || 'Failed to archive project');
+    }
+  };
+
+  const handleDelete = async () => {
     if (!window.confirm(
       `Are you sure you want to delete "${project.name}"?\n\n` +
       'This will permanently delete:\n' +
@@ -103,27 +216,33 @@ const ProjectDetail = () => {
     }
   };
 
+  const STATUS_CFG = {
+    PLANNING:  { color: '#64748B', bg: 'rgba(100,116,139,0.1)', border: 'rgba(100,116,139,0.25)', dot: '#94A3B8' },
+    ACTIVE:    { color: '#7C3AED', bg: 'rgba(124,58,237,0.1)',  border: 'rgba(124,58,237,0.25)', dot: '#7C3AED' },
+    AT_RISK:   { color: '#D97706', bg: 'rgba(245,158,11,0.1)',  border: 'rgba(245,158,11,0.25)', dot: '#F59E0B' },
+    ON_HOLD:   { color: '#D97706', bg: 'rgba(245,158,11,0.1)',  border: 'rgba(245,158,11,0.25)', dot: '#F59E0B' },
+    COMPLETED: { color: '#0D9488', bg: 'rgba(20,184,166,0.1)',  border: 'rgba(20,184,166,0.25)', dot: '#14B8A6' },
+    CANCELLED: { color: '#DC2626', bg: 'rgba(239,68,68,0.1)',   border: 'rgba(239,68,68,0.25)',  dot: '#EF4444' },
+  };
+  const PRIORITY_CFG = {
+    LOW:      { color: '#64748B', label: 'Low' },
+    MEDIUM:   { color: '#D97706', label: 'Medium' },
+    HIGH:     { color: '#DC2626', label: 'High' },
+    CRITICAL: { color: '#7C3AED', label: 'Critical' },
+  };
+  const statusCfg   = STATUS_CFG[project?.status]   || STATUS_CFG.PLANNING;
+  const priorityCfg = PRIORITY_CFG[project?.priority];
+
   const getStatusBadgeClass = (status) => {
     const statusClasses = {
-      'PLANNING': 'badge-gray',
-      'ACTIVE': 'badge-info',
-      'ON_HOLD': 'badge-warning',
-      'COMPLETED': 'badge-success',
-      'CANCELLED': 'badge-danger',
-      'TODO': 'badge-gray',
-      'IN_PROGRESS': 'badge-info',
-      'BLOCKED': 'badge-danger',
+      'PLANNING': 'badge-gray', 'ACTIVE': 'badge-info', 'AT_RISK': 'badge-warning',
+      'ON_HOLD': 'badge-warning', 'COMPLETED': 'badge-success', 'CANCELLED': 'badge-danger',
+      'TODO': 'badge-gray', 'IN_PROGRESS': 'badge-info', 'BLOCKED': 'badge-danger',
     };
     return statusClasses[status] || 'badge-gray';
   };
-
   const getPriorityBadgeClass = (priority) => {
-    const priorityClasses = {
-      'LOW': 'badge-gray',
-      'MEDIUM': 'badge-info',
-      'HIGH': 'badge-warning',
-      'CRITICAL': 'badge-danger'
-    };
+    const priorityClasses = { 'LOW': 'badge-gray', 'MEDIUM': 'badge-warning', 'HIGH': 'badge-danger', 'CRITICAL': 'badge-violet' };
     return priorityClasses[priority] || 'badge-gray';
   };
 
@@ -135,6 +254,7 @@ const ProjectDetail = () => {
   };
 
   const isOwner = userRole === 'OWNER';
+  const canManageTasks = userRole === 'OWNER' || userRole === 'DEVELOPER';
 
   if (loading) {
     return (
@@ -161,33 +281,109 @@ const ProjectDetail = () => {
   }
 
   return (
-    <div>
-      <div className="mb-6">
+    <div className="project-workspace">
+      <div className="project-backlink">
         <Link to="/projects" className="text-primary-600 hover:text-primary-700 text-sm">
           ← Back to projects
         </Link>
       </div>
 
-      <div className="mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
-        <div className="min-w-0">
-          <p className="mb-2 text-xs font-bold uppercase tracking-[0.16em] text-primary-700">Project overview</p>
-          <h1 className="mb-2 break-words text-3xl font-bold tracking-tight text-slate-900">{project.name}</h1>
-          <p className="max-w-3xl text-sm leading-6 text-slate-600">{project.description}</p>
-        </div>
-        <div className="flex flex-wrap items-center gap-3">
-          <span className={`${getStatusBadgeClass(project.status)} text-lg`}>
-            {project.status}
-          </span>
-          {isOwner && (
-            <button
-              onClick={handleDeleteProject}
-              className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm font-medium"
-              title="Delete Project"
-            >
-              Delete Project
-            </button>
+      <div className="project-workspace-heading">
+        <div style={{ minWidth: 0, flex: 1 }}>
+          {/* Breadcrumb */}
+          <Link to="/projects" style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', fontSize: '11px', color: 'var(--ink-muted)', fontWeight: 500, marginBottom: '10px', textDecoration: 'none' }}
+            onMouseEnter={e => e.currentTarget.style.color='var(--violet)'}
+            onMouseLeave={e => e.currentTarget.style.color='var(--ink-muted)'}>
+            <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
+            Projects
+          </Link>
+          {/* Title + pills row */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap', marginBottom: '6px' }}>
+            <h1 style={{ fontSize: '20px', fontWeight: 800, letterSpacing: '-0.03em', color: 'var(--ink)', margin: 0, lineHeight: 1.2 }}>
+              {project.name}
+            </h1>
+            {/* Status pill */}
+            <span style={{
+              display: 'inline-flex', alignItems: 'center', gap: '5px',
+              padding: '3px 10px', borderRadius: '100px',
+              background: statusCfg.bg, color: statusCfg.color,
+              border: `1px solid ${statusCfg.border}`,
+              fontSize: '11px', fontWeight: 700, whiteSpace: 'nowrap',
+            }}>
+              <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: statusCfg.dot, flexShrink: 0 }} />
+              {project.status?.replace(/_/g, ' ')}
+            </span>
+            {/* Priority pill — only if set */}
+            {priorityCfg && (
+              <span style={{
+                display: 'inline-flex', alignItems: 'center', gap: '4px',
+                padding: '2px 8px', borderRadius: '100px',
+                background: `${priorityCfg.color}12`, color: priorityCfg.color,
+                border: `1px solid ${priorityCfg.color}28`,
+                fontSize: '10px', fontWeight: 700, whiteSpace: 'nowrap',
+              }}>
+                <svg width="8" height="8" viewBox="0 0 8 8" fill={priorityCfg.color}><polygon points="4,0 8,8 0,8"/></svg>
+                {priorityCfg.label}
+              </span>
+            )}
+          </div>
+          {project.description && (
+            <p style={{ fontSize: '13px', color: 'var(--ink-secondary)', lineHeight: 1.5, maxWidth: '600px', margin: 0 }}>
+              {project.description}
+            </p>
           )}
         </div>
+
+        {/* Action buttons — clean, right-aligned */}
+        {isOwner && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
+            <Link
+              to={`/projects/${id}/members`}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '6px 12px', borderRadius: '8px', background: 'rgba(124,58,237,0.1)', color: 'var(--violet)', border: '1px solid rgba(124,58,237,0.2)', fontSize: '12px', fontWeight: 600, textDecoration: 'none', transition: 'all 150ms' }}
+              onMouseEnter={e => { e.currentTarget.style.background='rgba(124,58,237,0.18)'; }}
+              onMouseLeave={e => { e.currentTarget.style.background='rgba(124,58,237,0.1)'; }}
+            >
+              <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M3 20v-1a6 6 0 0 1 12 0v1"/><path d="M16 5.2a3 3 0 0 1 0 5.6M18 14a5 5 0 0 1 3 4.6V20"/></svg>
+              Members
+            </Link>
+            {/* ⋯ More actions dropdown */}
+            <div style={{ position: 'relative' }} className="project-more-menu">
+              <button
+                onClick={e => {
+                  const menu = e.currentTarget.nextElementSibling;
+                  menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
+                  const close = ev => { if (!e.currentTarget.closest('.project-more-menu').contains(ev.target)) { menu.style.display='none'; document.removeEventListener('click',close); } };
+                  setTimeout(() => document.addEventListener('click', close), 10);
+                }}
+                style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '32px', height: '32px', borderRadius: '8px', background: 'var(--bg-app)', border: '1px solid var(--border-strong)', color: 'var(--ink-secondary)', cursor: 'pointer', fontSize: '16px', transition: 'all 150ms' }}
+                aria-label="More actions"
+              >
+                ···
+              </button>
+              <div style={{ display: 'none', position: 'absolute', top: 'calc(100% + 6px)', right: 0, zIndex: 100, width: '160px', background: 'var(--bg-card)', border: '1px solid var(--border-strong)', borderRadius: '10px', boxShadow: 'var(--shadow-lg)', overflow: 'hidden', animation: 'slideUp 0.15s ease-out' }}>
+                <button
+                  onClick={() => { handleArchive(); }}
+                  style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '100%', padding: '9px 13px', fontSize: '12px', fontWeight: 500, color: '#D97706', background: 'transparent', textAlign: 'left', transition: 'background 120ms' }}
+                  onMouseEnter={e => { e.currentTarget.style.background='rgba(245,158,11,0.08)'; }}
+                  onMouseLeave={e => { e.currentTarget.style.background='transparent'; }}
+                >
+                  <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="m3 9 1 12h16l1-12M1 9h22M9 9V4h6v5"/></svg>
+                  Archive project
+                </button>
+                <div style={{ height: '1px', background: 'var(--border)', margin: '2px 0' }} />
+                <button
+                  onClick={() => { handleDelete(); }}
+                  style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '100%', padding: '9px 13px', fontSize: '12px', fontWeight: 500, color: '#DC2626', background: 'transparent', textAlign: 'left', transition: 'background 120ms' }}
+                  onMouseEnter={e => { e.currentTarget.style.background='rgba(239,68,68,0.07)'; }}
+                  onMouseLeave={e => { e.currentTarget.style.background='transparent'; }}
+                >
+                  <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+                  Delete project
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {error && (
@@ -202,252 +398,207 @@ const ProjectDetail = () => {
         </div>
       )}
 
-      {/* Project Navigation Tabs */}
-      <div className="border-b border-gray-200 mb-6">
-        <nav className="-mb-px flex space-x-8">
-          <button className="border-b-2 border-primary-600 py-4 px-1 text-sm font-medium text-primary-600">
-            Overview
-          </button>
-          <Link
-            to={`/projects/${id}/members`}
-            className="border-b-2 border-transparent py-4 px-1 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300"
-          >
-            Members
-          </Link>
-        </nav>
-      </div>
+      <TabNav tabs={tabs} activeTab={activeTab} onTabChange={setActiveTab} />
 
       <div className="space-y-6">
-        {/* Project Information */}
-        <div className="card">
-          <h2 className="text-xl font-semibold mb-4">Project Information</h2>
-          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-            <div>
-              <span className="text-gray-600">Goal:</span>
-              <p className="font-medium">{project.goal || 'No goal specified'}</p>
-            </div>
-            <div>
-              <span className="text-gray-600">Created by:</span>
-              <p className="font-medium">{project.created_by_name}</p>
-            </div>
-            {project.start_date && (
+        {activeTab === 'overview' && (
+          <div className="card">
+            <h2 className="text-xl font-semibold mb-4">Project Information</h2>
+            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
               <div>
-                <span className="text-gray-600">Start Date:</span>
-                <p className="font-medium">{new Date(project.start_date).toLocaleDateString()}</p>
+                <span className="text-gray-600">Goal:</span>
+                <p className="font-medium">{project.goal || 'No goal specified'}</p>
               </div>
-            )}
-            {project.deadline && (
               <div>
-                <span className="text-gray-600">Deadline:</span>
-                <p className="font-medium">{new Date(project.deadline).toLocaleDateString()}</p>
+                <span className="text-gray-600">Created by:</span>
+                <p className="font-medium">{project.created_by_name}</p>
               </div>
+              {project.start_date && (
+                <div>
+                  <span className="text-gray-600">Start Date:</span>
+                  <p className="font-medium">{new Date(project.start_date).toLocaleDateString()}</p>
+                </div>
+              )}
+              {project.deadline && (
+                <div>
+                  <span className="text-gray-600">Deadline:</span>
+                  <p className="font-medium">{new Date(project.deadline).toLocaleDateString()}</p>
+                </div>
+              )}
+              <div>
+                <span className="text-gray-600">Progress:</span>
+                <div className="flex items-center space-x-2">
+                  <div className="flex-1 bg-gray-200 rounded-full h-2">
+                    <div
+                      className="bg-primary-600 h-2 rounded-full transition-all"
+                      style={{ width: `${calculateProgress()}%` }}
+                    ></div>
+                  </div>
+                  <span className="font-medium">{calculateProgress()}%</span>
+                </div>
+              </div>
+              <div>
+                <span className="text-gray-600">Tasks:</span>
+                <p className="font-medium">{project.completed_task_count} / {project.task_count}</p>
+              </div>
+              <div>
+                <span className="text-gray-600">Team Members:</span>
+                <p className="font-medium">{members.length}</p>
+              </div>
+              <div>
+                <span className="text-gray-600">Milestones:</span>
+                <p className="font-medium">{milestones.length}</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'ai' && (
+          <AICommandCenter key={id} projectId={id} userRole={userRole} tasks={tasks} onUpdate={fetchProjectData} />
+        )}
+
+        {activeTab === 'tasks' && (
+          <div className="project-work-items">
+            <div className="work-items-toolbar">
+              <h2 className="text-xl font-semibold">Work items <span className="work-items-count">{tasks.length}</span></h2><input className="input sm:max-w-xs" type="search" aria-label="Search project tasks" placeholder="Search tasks…" value={taskQuery} onChange={e => setTaskQuery(e.target.value)} /><button className="btn-secondary" onClick={() => setTaskView(taskView === 'list' ? 'board' : 'list')}>{taskView === 'list' ? '▥ Kanban' : '☷ List'}</button>
+              {canManageTasks && (
+                <button
+                  onClick={() => setShowTaskModal(true)}
+                  className="btn btn-primary"
+                  style={{ gap: '6px', fontWeight: 700 }}
+                >
+                  <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+                  Add Task
+                </button>
+              )}
+            </div>
+
+            {tasks.length > 0 ? (
+              <div className={taskView === 'board' ? 'kanban-board' : 'space-y-3'}>
+                {taskView === 'board' ? ['TODO','IN_PROGRESS','BLOCKED','COMPLETED'].map(status => <section className="kanban-column" key={status}><h3>{status.replaceAll('_',' ')}<span>{tasks.filter(t => t.status === status).length}</span></h3><div className="space-y-3">{tasks.filter(t => t.status === status && t.title.toLowerCase().includes(taskQuery.toLowerCase())).map(task => <TaskCard key={task.id} task={task} onUpdate={fetchProjectData} userRole={userRole} projectMembers={members} />)}</div></section>) : tasks.filter(t => t.title.toLowerCase().includes(taskQuery.toLowerCase())).map(task => (
+                  <TaskCard
+                    key={task.id}
+                    task={task}
+                    onUpdate={fetchProjectData}
+                    userRole={userRole}
+                    projectMembers={members}
+                  />
+                ))}
+              </div>
+            ) : (
+              <p className="text-gray-500 text-center py-8">No tasks yet. Add your first task to get started.</p>
             )}
-            <div>
-              <span className="text-gray-600">Progress:</span>
-              <div className="flex items-center space-x-2">
-                <div className="flex-1 bg-gray-200 rounded-full h-2">
-                  <div 
-                    className="bg-primary-600 h-2 rounded-full transition-all" 
-                    style={{ width: `${calculateProgress()}%` }}
-                  ></div>
-                </div>
-                <span className="font-medium">{calculateProgress()}%</span>
-              </div>
-            </div>
-            <div>
-              <span className="text-gray-600">Tasks:</span>
-              <p className="font-medium">{project.completed_task_count} / {project.task_count}</p>
-            </div>
           </div>
-        </div>
+        )}
 
-        {/* Tasks */}
-        <div className="card">
-          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-            <h2 className="text-xl font-semibold">Tasks</h2>
-            <button onClick={() => setShowTaskModal(true)} className="btn-primary">
-              + Add Task
-            </button>
-          </div>
-          
-          {tasks.length > 0 ? (
-            <div className="space-y-3">
-              {tasks.map(task => (
-                <div key={task.id} className="rounded-lg border border-slate-100 bg-slate-50/70 p-4 transition-colors hover:border-blue-100 hover:bg-blue-50/30">
-                  <div className="mb-2 flex flex-col justify-between gap-2 sm:flex-row sm:items-start">
-                    <h3 className="font-medium text-gray-900">{task.title}</h3>
-                    <div className="flex flex-wrap gap-2">
-                      <span className={getPriorityBadgeClass(task.priority)}>
-                        {task.priority}
-                      </span>
-                      <span className={getStatusBadgeClass(task.status)}>
-                        {task.status}
-                      </span>
-                    </div>
-                  </div>
-                  {task.description && (
-                    <p className="text-sm text-gray-600 mb-2">{task.description}</p>
-                  )}
-                  <div className="flex flex-col justify-between gap-2 text-sm text-gray-600 sm:flex-row sm:items-center">
-                    <div>
-                      {task.assigned_users && task.assigned_users.length > 0 && (
-                        <span>Assigned to: {task.assigned_users.map(u => u.name).join(', ')}</span>
-                      )}
-                    </div>
-                    {task.deadline && (
-                      <span>Due: {new Date(task.deadline).toLocaleDateString()}</span>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-gray-500 text-center py-8">No tasks yet. Add your first task to get started.</p>
-          )}
-        </div>
-
-        {/* Future Modules Placeholders */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="card border-dashed bg-slate-50/70">
-            <h2 className="mb-2 text-base font-semibold text-gray-700">Dependency Graph</h2>
-            <p className="text-sm text-gray-500">Coming soon: Visual task dependency graph</p>
-          </div>
-
-          <div className="card border-dashed bg-slate-50/70">
-            <h2 className="mb-2 text-base font-semibold text-gray-700">AI Planner</h2>
-            <p className="text-sm text-gray-500">Coming soon: AI-powered task decomposition</p>
-          </div>
-
-          <div className="card border-dashed bg-slate-50/70">
-            <h2 className="mb-2 text-base font-semibold text-gray-700">Risk Analysis</h2>
-            <p className="text-sm text-gray-500">Coming soon: Automated risk detection and analysis</p>
-          </div>
-
-          <div className="card border-dashed bg-slate-50/70">
-            <h2 className="mb-2 text-base font-semibold text-gray-700">Replanning Engine</h2>
-            <p className="text-sm text-gray-500">Coming soon: Autonomous project replanning</p>
-          </div>
-        </div>
+        {activeTab === 'dependencies' && <DependenciesTab projectId={id} tasks={tasks} />}
+        {activeTab === 'assignments' && <AssignmentsTab tasks={tasks} members={members} />}
+        {activeTab === 'timeline' && <TimelineTab project={project} tasks={tasks} milestones={milestones} />}
+        {activeTab === 'milestones' && <MilestonesTab projectId={id} userRole={userRole} members={members} />}
+        {activeTab === 'repository' && <RepositoryTab project={project} projectId={id} userRole={userRole} onUpdate={fetchProjectData} />}
+        {activeTab === 'activity' && <ActivityTab projectId={id} />}
+        {activeTab === 'recovery' && (
+          <RecoveryWorkspace projectId={id} tasks={tasks} members={members} />
+        )}
+        {activeTab === 'chat' && <ChatTab projectId={id} />}
       </div>
 
       {/* Create Task Modal */}
-      {showTaskModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
-              <h2 className="text-2xl font-bold mb-4">Create New Task</h2>
-              
-              {error && (
-                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-4">
-                  {error}
-                </div>
-              )}
+      {showTaskModal && canManageTasks && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px', zIndex: 50 }}>
+          <div className="card" style={{ maxWidth: '600px', width: '100%', maxHeight: '90vh', overflowY: 'auto', borderRadius: '16px', padding: '28px', animation: 'slideUp 0.25s ease-out' }}>
+            <h2 style={{ fontSize: '18px', fontWeight: 800, letterSpacing: '-0.02em', color: 'var(--ink)', marginBottom: '20px' }}>Create New Task</h2>
 
-              <form onSubmit={handleCreateTask} className="space-y-4">
+            {error && <div className="error-state" style={{ marginBottom: '16px' }}>{error}</div>}
+
+            <form onSubmit={handleCreateTask} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              {/* Title */}
+              <div>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--ink-secondary)', marginBottom: '6px' }}>Task title *</label>
+                <input type="text" required value={taskFormData.title} onChange={e => setTaskFormData({ ...taskFormData, title: e.target.value })} className="input" placeholder="e.g. Implement login API" />
+              </div>
+
+              {/* Description */}
+              <div>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--ink-secondary)', marginBottom: '6px' }}>Description</label>
+                <textarea value={taskFormData.description} onChange={e => setTaskFormData({ ...taskFormData, description: e.target.value })} className="input" rows={3} placeholder="What needs to be done?" style={{ resize: 'vertical' }} />
+              </div>
+
+              {/* Status + Priority */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Task Title *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={taskFormData.title}
-                    onChange={(e) => setTaskFormData({ ...taskFormData, title: e.target.value })}
-                    className="input"
-                    placeholder="Enter task title"
-                  />
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--ink-secondary)', marginBottom: '6px' }}>Status</label>
+                  <select value={taskFormData.status} onChange={e => setTaskFormData({ ...taskFormData, status: e.target.value })} className="input">
+                    <option value="TODO">To Do</option>
+                    <option value="IN_PROGRESS">In Progress</option>
+                    <option value="BLOCKED">Blocked</option>
+                    <option value="COMPLETED">Completed</option>
+                  </select>
                 </div>
-
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Description
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--ink-secondary)', marginBottom: '6px' }}>Priority</label>
+                  <select value={taskFormData.priority} onChange={e => setTaskFormData({ ...taskFormData, priority: e.target.value })} className="input">
+                    <option value="LOW">Low</option>
+                    <option value="MEDIUM">Medium</option>
+                    <option value="HIGH">High</option>
+                    <option value="CRITICAL">Critical</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Hours + Deadline */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--ink-secondary)', marginBottom: '6px' }}>Estimated hours</label>
+                  <input type="number" min="0" step="0.5" value={taskFormData.estimated_hours} onChange={e => setTaskFormData({ ...taskFormData, estimated_hours: e.target.value })} className="input" placeholder="0" />
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--ink-secondary)', marginBottom: '6px' }}>Deadline</label>
+                  <input type="date" value={taskFormData.deadline} onChange={e => setTaskFormData({ ...taskFormData, deadline: e.target.value })} className="input" />
+                </div>
+              </div>
+
+              {/* Skills */}
+              <div style={{ borderTop: '1px solid var(--border)', paddingTop: '16px' }}>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--ink-secondary)', marginBottom: '10px' }}>Required skills</label>
+                {taskFormData.required_skills.length > 0 && (
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '10px' }}>
+                    {taskFormData.required_skills.map(skill => (
+                      <span key={skill.skill_name} className="badge badge-violet" style={{ gap: '4px' }}>
+                        {skill.skill_name}
+                        <span style={{ opacity: 0.7 }}>({skill.required_proficiency})</span>
+                        {skill.is_mandatory && <span>*</span>}
+                        <button type="button" onClick={() => handleRemoveSkill(skill.skill_name)} style={{ marginLeft: '3px', color: 'inherit', opacity: 0.7, fontWeight: 700 }} title="Remove">×</button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr auto auto', gap: '8px', alignItems: 'center' }}>
+                  <input type="text" value={skillInput} onChange={e => setSkillInput(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleAddSkill(); } }} className="input" placeholder="Skill name" />
+                  <select value={skillProficiency} onChange={e => setSkillProficiency(e.target.value)} className="input">
+                    <option value="BEGINNER">Beginner</option>
+                    <option value="INTERMEDIATE">Intermediate</option>
+                    <option value="ADVANCED">Advanced</option>
+                    <option value="EXPERT">Expert</option>
+                  </select>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '12px', color: 'var(--ink-secondary)', whiteSpace: 'nowrap', cursor: 'pointer' }}>
+                    <input type="checkbox" checked={skillMandatory} onChange={e => setSkillMandatory(e.target.checked)} />
+                    Required
                   </label>
-                  <textarea
-                    value={taskFormData.description}
-                    onChange={(e) => setTaskFormData({ ...taskFormData, description: e.target.value })}
-                    className="input"
-                    rows="3"
-                    placeholder="Enter task description"
-                  ></textarea>
+                  <button type="button" onClick={handleAddSkill} className="btn btn-secondary" style={{ minHeight: '32px', padding: '4px 10px', fontSize: '12px' }}>Add</button>
                 </div>
+                <p style={{ fontSize: '11px', color: 'var(--ink-muted)', marginTop: '6px' }}>Mandatory skills (*) must be met for AI assignment recommendations.</p>
+              </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Status
-                    </label>
-                    <select
-                      value={taskFormData.status}
-                      onChange={(e) => setTaskFormData({ ...taskFormData, status: e.target.value })}
-                      className="input"
-                    >
-                      <option value="TODO">To Do</option>
-                      <option value="IN_PROGRESS">In Progress</option>
-                      <option value="BLOCKED">Blocked</option>
-                      <option value="COMPLETED">Completed</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Priority
-                    </label>
-                    <select
-                      value={taskFormData.priority}
-                      onChange={(e) => setTaskFormData({ ...taskFormData, priority: e.target.value })}
-                      className="input"
-                    >
-                      <option value="LOW">Low</option>
-                      <option value="MEDIUM">Medium</option>
-                      <option value="HIGH">High</option>
-                      <option value="CRITICAL">Critical</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Estimated Hours
-                    </label>
-                    <input
-                      type="number"
-                      min="0"
-                      step="0.5"
-                      value={taskFormData.estimated_hours}
-                      onChange={(e) => setTaskFormData({ ...taskFormData, estimated_hours: e.target.value })}
-                      className="input"
-                      placeholder="0"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Deadline
-                    </label>
-                    <input
-                      type="date"
-                      value={taskFormData.deadline}
-                      onChange={(e) => setTaskFormData({ ...taskFormData, deadline: e.target.value })}
-                      className="input"
-                    />
-                  </div>
-                </div>
-
-                <div className="flex justify-end space-x-3 pt-4">
-                  <button
-                    type="button"
-                    onClick={() => setShowTaskModal(false)}
-                    className="btn-secondary"
-                  >
-                    Cancel
-                  </button>
-                  <button type="submit" className="btn-primary">
-                    Create Task
-                  </button>
-                </div>
-              </form>
-            </div>
+              {/* Actions */}
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', paddingTop: '6px', borderTop: '1px solid var(--border)' }}>
+                <button type="button" onClick={() => setShowTaskModal(false)} className="btn btn-secondary">Cancel</button>
+                <button type="submit" className="btn btn-primary" style={{ minWidth: '120px' }}>
+                  <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+                  Create Task
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

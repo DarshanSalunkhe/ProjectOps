@@ -1,8 +1,9 @@
 import { query, getClient } from '../config/database.js';
 
 export const dependencyRepository = {
-  async create(taskId, dependsOnTaskId, dependencyType = 'BLOCKS') {
-    const result = await query(
+  async create(taskId, dependsOnTaskId, dependencyType = 'BLOCKS', client) {
+    const execute = client ? client.query.bind(client) : query;
+    const result = await execute(
       `INSERT INTO task_dependencies (task_id, depends_on_task_id, dependency_type) 
        VALUES ($1, $2, $3) 
        RETURNING *`,
@@ -16,6 +17,7 @@ export const dependencyRepository = {
       `SELECT td.*, 
               t.title as depends_on_task_title,
               t.status as depends_on_task_status,
+              t.deadline as depends_on_task_deadline,
               t.project_id as depends_on_task_project_id
        FROM task_dependencies td
        JOIN tasks t ON td.depends_on_task_id = t.id

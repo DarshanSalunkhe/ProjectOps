@@ -3,12 +3,14 @@ import {
   register,
   login,
   logout,
+  changePassword,
   getCurrentUser,
   updateProfile,
   requestPasswordReset,
   confirmPasswordReset,
   getAllUsers,
-  updateUserRole
+  updateUserRole,
+  getWorkspaceMembers
 } from '../controllers/authController.js';
 import { registerValidation, loginValidation } from '../validators/authValidators.js';
 import { updateProfileValidation } from '../validators/profileValidators.js';
@@ -32,6 +34,10 @@ router.patch('/me', authenticate, updateProfileValidation, updateProfile);
 // Password reset
 router.post('/password-reset/request', requestPasswordResetValidation, requestPasswordReset);
 router.post('/password-reset/confirm', confirmPasswordResetValidation, confirmPasswordReset);
+router.post('/change-password', authenticate, changePassword);
+
+// Workspace members (all authenticated users can see)
+router.get('/workspace/members', authenticate, getWorkspaceMembers);
 
 // Admin endpoints
 router.get('/users', authenticate, authorize('SYSTEM_ADMIN'), getAllUsers);

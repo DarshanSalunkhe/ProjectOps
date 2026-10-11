@@ -1,6 +1,7 @@
 import app from './src/app.js';
 import config from './src/config/index.js';
 import { testConnection } from './src/config/database.js';
+import { startGithubWorker } from './src/services/githubEventService.js';
 
 const startServer = async () => {
   try {
@@ -29,8 +30,10 @@ const startServer = async () => {
       console.log('');
     });
 
+    const stopGithubWorker = startGithubWorker();
     // Graceful shutdown
     const gracefulShutdown = () => {
+      stopGithubWorker();
       console.log('\nShutting down gracefully...');
       server.close(() => {
         console.log('Server closed');

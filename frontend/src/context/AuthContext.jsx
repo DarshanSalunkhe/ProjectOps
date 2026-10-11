@@ -12,15 +12,17 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const checkAuth = async () => {
+    const token = localStorage.getItem('token');
     try {
-      const token = localStorage.getItem('token');
       if (token) {
         const userData = await authService.me();
-        setUser(userData);
+        if (localStorage.getItem('token') === token) setUser(userData);
       }
     } catch (error) {
-      localStorage.removeItem('token');
-      setUser(null);
+      if (localStorage.getItem('token') === token) {
+        localStorage.removeItem('token');
+        setUser(null);
+      }
     } finally {
       setLoading(false);
     }
@@ -40,9 +42,17 @@ export const AuthProvider = ({ children }) => {
     return data;
   };
 
-  const logout = () => {
-    localStorage.removeItem('token');
-    setUser(null);
+  const logout = async () => {
+    try {
+      await authService.logoutBackend();
+    } catch (error) {
+      console.error('Logout error:', error);
+    } finally {
+      // Always clear local state regardless of API call result
+      authService.logout();
+      setUser(null);
+      window.location.href = '/login';
+    }
   };
 
   // Memoize setToken to prevent useEffect re-runs in GoogleCallback

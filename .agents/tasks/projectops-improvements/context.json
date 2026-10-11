@@ -1,0 +1,32 @@
+{
+  "project_type": "Full-stack web application - React 18 + Vite frontend, Node.js + Express backend, PostgreSQL database on Neon",
+  "language": "JavaScript (ES modules)",
+  "build_system": "npm workspaces with separate frontend and backend packages. Root package.json has concurrently for dev mode. Frontend uses Vite, backend uses nodemon.",
+  "test_framework": "vitest for frontend (npm run test --prefix frontend), node:test for backend unit tests (npm run test --prefix backend), Playwright for browser tests (npm run audit:browser)",
+  "build_command": "npm run build (runs build:backend then build:frontend). Backend build is validation only (node --check server.js). Frontend build is vite build.",
+  "test_command": "npm run audit:unit runs backend unit tests in scripts/audit/regressions.test.mjs. npm run audit:browser runs Playwright E2E tests.",
+  "verification_instructions": "1. Ensure database migrations applied (npm run migrate --prefix backend). 2. Run backend unit tests (npm run audit:unit). 3. Start dev servers (npm run dev). 4. Manually test changed features in browser at localhost:5173. 5. Run Playwright E2E tests if UI changed (npm run audit:browser). 6. Check console for errors.",
+  "snapshot_or_generated_files": null,
+  "environment_constraints": "PostgreSQL database on Neon (DATABASE_URL in .env). Backend runs on port 5000, frontend on 5173. JWT_SECRET required. AI features need OPENAI_API_KEY, ANTHROPIC_API_KEY, or GEMINI_API_KEY but have deterministic fallbacks. GitHub integration needs GITHUB_CLIENT_ID and GITHUB_CLIENT_SECRET but can display without them. Never restart the dev server programmatically - manual restart if needed.",
+  "contribution_requirements": "Phase A (logout backend, activityRepository, projectAuth middleware, migrations 015-019) already completed. Must preserve existing manual task creation. Must not add recurring AI hooks or repeated agent workflows. Continue through phases within available permissions. If credentials block a feature, finish independent work and report the blocker.",
+  "key_patterns": "Backend: layered architecture with routes -> controllers -> services -> repositories. Repositories handle DB queries (use pool from config/database.js). Services contain business logic. Controllers use asyncHandler wrapper and successResponse/errorResponse utils. Middleware: auth.js (requireAuth), projectAuth.js (requireProjectMember, requireProjectOwner, requireDeveloperOrOwner) already exist. Frontend: React functional components with hooks. Context API for auth (AuthContext.jsx). Services in frontend/src/services call backend via axios api instance. Pages in frontend/src/pages. Shared components in frontend/src/components. Tailwind CSS for styling with custom classes in index.css. Database: Migrations in database/migrations numbered 001-019. Migration 015 (recovery_proposals), 016 (acceptance_criteria), 017 (milestone contributions), 018 (profile_privacy), 019 (ai_usage_tracking) already exist.",
+  "relevant_files": [
+    "d:\\ProjectOps\\backend\\src\\middleware\\projectAuth.js",
+    "d:\\ProjectOps\\backend\\src\\repositories\\activityRepository.js",
+    "d:\\ProjectOps\\backend\\src\\services\\aiPlannerService.js",
+    "d:\\ProjectOps\\backend\\src\\services\\skillMatchingService.js",
+    "d:\\ProjectOps\\backend\\src\\controllers\\taskController.js",
+    "d:\\ProjectOps\\frontend\\src\\context\\AuthContext.jsx",
+    "d:\\ProjectOps\\frontend\\src\\pages\\Tasks.jsx",
+    "d:\\ProjectOps\\frontend\\src\\pages\\AIPlanner.jsx",
+    "d:\\ProjectOps\\frontend\\src\\pages\\ProjectDetail.jsx",
+    "d:\\ProjectOps\\frontend\\src\\components\\ProjectTabs.jsx",
+    "d:\\ProjectOps\\database\\migrations\\016_add_acceptance_criteria_to_tasks.sql",
+    "d:\\ProjectOps\\database\\migrations\\017_add_milestone_contributions.sql",
+    "d:\\ProjectOps\\database\\migrations\\018_add_profile_privacy.sql",
+    "d:\\ProjectOps\\database\\migrations\\019_add_ai_usage_tracking.sql",
+    "d:\\ProjectOps\\frontend\\tailwind.config.js",
+    "d:\\ProjectOps\\scripts\\audit\\regressions.test.mjs"
+  ],
+  "directory_structure": "Root: package.json (workspaces), .env (not .env.local for backend). Frontend: src/{components, pages, context, services, hooks, utils, layouts}, tailwind.config.js. Backend: src/{routes, controllers, services, repositories, middleware, validators, config, utils}, server.js. Database: migrations/, seeds/. Scripts: audit/ (tests). Docs: architecture.md, api-contracts.md. Node_modules in root, frontend, backend."
+}
