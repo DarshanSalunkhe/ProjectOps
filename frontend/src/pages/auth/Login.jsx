@@ -86,7 +86,7 @@ const Login = () => {
           className="btn-primary auth-submit"
           style={{ marginTop: '4px', minHeight: '44px', fontSize: '14px', fontWeight: 700, borderRadius: '10px' }}
         >
-          {!loading && 'Sign in'}
+          {loading ? 'Signing in…' : 'Sign in'}
         </button>
       </form>
 

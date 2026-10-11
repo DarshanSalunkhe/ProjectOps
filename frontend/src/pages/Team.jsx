@@ -1,3 +1,4 @@
+import { CollectionSkeleton, Modal } from '../components/WorkspaceUI';
 import { useState, useEffect } from 'react';
 import api from '../services/api';
 import Avatar from '../components/Avatar';
@@ -79,17 +80,13 @@ const Team = () => {
   const canInvite = user && (user.role === 'PROJECT_OWNER' || user.role === 'SYSTEM_ADMIN' || user.role === 'PROJECT_MANAGER');
   const selectS = { fontSize:'12px', background:'var(--bg-card)', border:'1px solid var(--border-strong)', borderRadius:'8px', color:'var(--ink)', padding:'5px 10px', minHeight:'34px' };
 
-  if (loading) return (
-    <div style={{ display:'flex', alignItems:'center', justifyContent:'center', height:'200px' }}>
-      <div style={{ width:'32px', height:'32px', border:'3px solid rgba(124,58,237,0.2)', borderTopColor:'var(--violet)', borderRadius:'50%', animation:'spin 0.8s linear infinite' }} />
-    </div>
-  );
+  if (loading) return <CollectionSkeleton label="Loading workspace members…" />;
 
   return (
     <div className="page-enter">
       {/* Header */}
       <div style={{ marginBottom:'24px' }}>
-        <p style={{ fontSize:'10px', fontWeight:700, textTransform:'uppercase', letterSpacing:'0.12em', color:'var(--violet)', marginBottom:'5px' }}>Workspace</p>
+        <p style={{ fontSize:'10px', fontWeight:700, textTransform:'uppercase', letterSpacing:'0.12em', color:'var(--accent-text)', marginBottom:'5px' }}>Workspace</p>
         <h1 style={{ fontSize:'26px', fontWeight:800, letterSpacing:'-0.04em', color:'var(--ink)', marginBottom:'4px' }}>Team Directory</h1>
         <p style={{ fontSize:'13px', color:'var(--ink-secondary)' }}>View all workspace members, their skills, and availability.</p>
       </div>
@@ -115,7 +112,7 @@ const Team = () => {
       {/* Stats strip */}
       <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(120px,1fr))', gap:'10px', marginBottom:'20px' }}>
         {[
-          { label:'Total Members', value:members.length, color:'var(--violet)' },
+          { label:'Total Members', value:members.length, color:'var(--accent-text)' },
           { label:'Available', value:members.filter(m => m.availability_status === 'AVAILABLE').length, color:'#0D9488' },
           { label:'Experts', value:members.filter(m => m.experience_level === 'EXPERT').length, color:'#4F46E5' },
           { label:'Avg Capacity', value:`${members.length > 0 ? Math.round(members.reduce((s,m) => s+(m.weekly_capacity_hours||0),0)/members.length) : 0}h`, color:'var(--ink)' },
@@ -129,7 +126,7 @@ const Team = () => {
 
       {/* Cards */}
       {filteredMembers.length > 0 ? (
-        <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(280px,1fr))', gap:'14px' }}>
+        <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(min(100%,280px),1fr))', gap:'14px' }}>
           {filteredMembers.map(member => {
             const capPct = calcCap(member.workload_hours, member.weekly_capacity_hours);
             const expCfg = EXP_CFG[member.experience_level] || EXP_CFG.BEGINNER;
@@ -143,8 +140,8 @@ const Team = () => {
                 <div style={{ display:'flex', alignItems:'flex-start', gap:'10px', marginBottom:'10px' }}>
                   <Avatar user={member} size="md" />
                   <div style={{ minWidth:0, flex:1 }}>
-                    <h3 style={{ fontSize:'13px', fontWeight:700, color:'var(--ink)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', marginBottom:'2px' }}>{member.name}</h3>
-                    <p style={{ fontSize:'11px', color:'var(--ink-muted)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{member.email}</p>
+                    <h3 className="mobile-readable" style={{ fontSize:'13px', fontWeight:700, color:'var(--ink)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', marginBottom:'2px' }}>{member.name}</h3>
+                    <p className="mobile-readable" style={{ fontSize:'11px', color:'var(--ink-muted)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{member.email}</p>
                     <div style={{ display:'flex', flexWrap:'wrap', alignItems:'center', gap:'5px', marginTop:'6px' }}>
                       <RolePill role={member.role} />
                       <span style={{ display:'inline-flex', alignItems:'center', gap:'4px', fontSize:'10px', fontWeight:600, color:'var(--ink-secondary)' }}>
@@ -155,7 +152,7 @@ const Team = () => {
                   </div>
                 </div>
 
-                {member.bio && <p style={{ fontSize:'12px', color:'var(--ink-secondary)', lineHeight:1.5, marginBottom:'10px', overflow:'hidden', display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical' }}>{member.bio}</p>}
+                {member.bio && <p className="mobile-readable" style={{ fontSize:'12px', color:'var(--ink-secondary)', lineHeight:1.5, marginBottom:'10px', overflow:'hidden', display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical' }}>{member.bio}</p>}
 
                 {/* Experience + capacity */}
                 <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', paddingTop:'10px', borderTop:'1px solid var(--border)', marginBottom:'8px' }}>
@@ -181,7 +178,7 @@ const Team = () => {
                     <p style={{ fontSize:'10px', fontWeight:600, color:'var(--ink-muted)', marginBottom:'6px', textTransform:'uppercase', letterSpacing:'0.05em' }}>Skills</p>
                     <div style={{ display:'flex', flexWrap:'wrap', gap:'4px' }}>
                       {member.skills.slice(0,5).map((s,i) => (
-                        <span key={i} style={{ fontSize:'10px', fontWeight:600, padding:'2px 7px', borderRadius:'100px', background:'rgba(124,58,237,0.08)', color:'var(--violet)', border:'1px solid rgba(124,58,237,0.2)' }}>{s}</span>
+                        <span key={i} style={{ fontSize:'10px', fontWeight:600, padding:'2px 7px', borderRadius:'100px', background:'rgba(124,58,237,0.08)', color:'var(--accent-text)', border:'1px solid rgba(124,58,237,0.2)' }}>{s}</span>
                       ))}
                       {member.skills.length > 5 && <span style={{ fontSize:'10px', fontWeight:600, padding:'2px 7px', borderRadius:'100px', background:'var(--bg-app)', color:'var(--ink-muted)' }}>+{member.skills.length-5}</span>}
                     </div>
@@ -211,9 +208,7 @@ const Team = () => {
 
       {/* Invite modal */}
       {inviteTarget && (
-        <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.5)', backdropFilter:'blur(4px)', display:'flex', alignItems:'center', justifyContent:'center', padding:'16px', zIndex:50 }}>
-          <div className="card" style={{ maxWidth:'400px', width:'100%', borderRadius:'16px', padding:'24px', animation:'slideUp 0.25s ease-out' }}>
-            <h2 style={{ fontSize:'16px', fontWeight:800, color:'var(--ink)', marginBottom:'4px' }}>Invite to project</h2>
+        <Modal title="Invite to project" busy={inviting} onClose={() => { setInviteTarget(null); setInviteMsg(null); }}>
             <p style={{ fontSize:'13px', color:'var(--ink-secondary)', marginBottom:'18px' }}>
               Send an invitation to <strong style={{ color:'var(--ink)' }}>{inviteTarget.name}</strong>
             </p>
@@ -236,13 +231,12 @@ const Team = () => {
               {inviteMsg && <p style={{ fontSize:'12px', fontWeight:500, color: inviteMsg.ok ? '#0D9488' : '#DC2626' }}>{inviteMsg.text}</p>}
               <div style={{ display:'flex', gap:'8px', paddingTop:'4px' }}>
                 <button type="submit" disabled={inviting} aria-busy={inviting} className="btn btn-primary" style={{ flex:1, minHeight:'36px' }}>
-                  {!inviting && 'Send invitation'}
+                  {inviting ? 'Sending invitation…' : 'Send invitation'}
                 </button>
-                <button type="button" onClick={() => { setInviteTarget(null); setInviteMsg(null); }} className="btn btn-secondary">Cancel</button>
+                <button type="button" disabled={inviting} onClick={() => { setInviteTarget(null); setInviteMsg(null); }} className="btn btn-secondary">Cancel</button>
               </div>
             </form>
-          </div>
-        </div>
+        </Modal>
       )}
     </div>
   );

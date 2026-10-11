@@ -1,3 +1,4 @@
+import { CollectionSkeleton } from '../components/WorkspaceUI';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { StatusBadge } from '../components/WorkspaceUI';
@@ -55,7 +56,7 @@ const Tasks = () => {
     <div className="page-enter">
       {/* Header */}
       <div style={{ marginBottom: '24px' }}>
-        <p style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.12em', color: 'var(--violet)', marginBottom: '5px' }}>Execution</p>
+        <p style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.12em', color: 'var(--accent-text)', marginBottom: '5px' }}>Execution</p>
         <h1 style={{ fontSize: '26px', fontWeight: 800, letterSpacing: '-0.04em', color: 'var(--ink)', marginBottom: '4px' }}>All Tasks</h1>
         <p style={{ fontSize: '13px', color: 'var(--ink-secondary)' }}>A consolidated view of work across your projects.</p>
       </div>
@@ -108,9 +109,7 @@ const Tasks = () => {
       {error && <div className="error-state" style={{ marginBottom: '16px' }}>{error}</div>}
 
       {loading ? (
-        <div className="card" style={{ minHeight: '160px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <div style={{ width: '28px', height: '28px', border: '3px solid rgba(124,58,237,0.15)', borderTopColor: 'var(--violet)', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
-        </div>
+        <CollectionSkeleton label="Loading tasks…" count={4} />
       ) : view === 'board' ? (
         <div className="kanban-board">
           {['TODO','IN_PROGRESS','BLOCKED','COMPLETED'].map(status => (
@@ -134,7 +133,7 @@ const Tasks = () => {
           {filteredTasks.map(task => (
             <article
               key={task.id}
-              className="card"
+              className="card task-list-card"
               style={{ padding: '14px 18px', cursor: 'pointer', transition: 'border-color 150ms, box-shadow 150ms', display: 'flex', flexDirection: 'column', gap: '0' }}
               onClick={() => setSelectedTask(task)}
               onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(124,58,237,0.3)'; e.currentTarget.style.boxShadow = '0 4px 12px rgba(124,58,237,0.08)'; }}
@@ -142,11 +141,11 @@ const Tasks = () => {
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px' }}>
                 <div style={{ minWidth: 0, flex: 1 }}>
-                  <h2 style={{ fontSize: '14px', fontWeight: 600, color: 'var(--ink)', letterSpacing: '-0.01em', marginBottom: '3px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <h2 className="mobile-readable" style={{ fontSize: '14px', fontWeight: 600, color: 'var(--ink)', letterSpacing: '-0.01em', marginBottom: '3px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {task.title}
                   </h2>
                   {task.description && (
-                    <p style={{ fontSize: '12px', color: 'var(--ink-secondary)', overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 1, WebkitBoxOrient: 'vertical' }}>{task.description}</p>
+                    <p className="mobile-readable" style={{ fontSize: '12px', color: 'var(--ink-secondary)', overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 1, WebkitBoxOrient: 'vertical' }}>{task.description}</p>
                   )}
                 </div>
                 <div style={{ display: 'flex', gap: '5px', flexShrink: 0, flexWrap: 'wrap', justifyContent: 'flex-end' }}>

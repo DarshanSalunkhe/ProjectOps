@@ -2,15 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { authService } from '../services/authService';
 
-function getStoredTheme() {
-  const stored = localStorage.getItem('theme');
-  return stored === 'dark' ? 'dark' : 'light';
-}
-function applyTheme(t) {
-  const eff = t === 'dark' ? 'dark' : 'light';
-  document.documentElement.classList.toggle('dark', eff === 'dark');
-  document.documentElement.setAttribute('data-theme', eff);
-}
+import { getStoredTheme, setTheme } from '../utils/theme';
 
 // Shared field wrapper — works in both themes
 const Field = ({ label, hint, children }) => (
@@ -43,14 +35,14 @@ const Settings = () => {
   const [passwordForm, setPasswordForm] = useState({ current: '', next: '', confirm: '' });
   const [passwordMsg, setPasswordMsg] = useState(null);
   const [passwordSaving, setPasswordSaving] = useState(false);
-  const [theme, setTheme] = useState(getStoredTheme);
+  const [theme, setThemeState] = useState(getStoredTheme);
 
   useEffect(() => {
     if (user) setProfile({ name: user.name || '', email: user.email || '', bio: user.bio || '', profile_visibility: user.profile_visibility || 'PUBLIC' });
   }, [user]);
 
-  useEffect(() => { localStorage.setItem('theme', theme); applyTheme(theme); }, [theme]);
-  useEffect(() => { applyTheme(getStoredTheme()); }, []);
+  useEffect(() => { setTheme(theme); }, [theme]);
+  useEffect(() => { const sync = () => setThemeState(getStoredTheme()); window.addEventListener('projectops:theme-changed', sync); return () => window.removeEventListener('projectops:theme-changed', sync); }, []);
 
   const saveProfile = async (e) => {
     e.preventDefault();
@@ -80,10 +72,10 @@ const Settings = () => {
   };
 
   return (
-    <div className="page-enter" style={{ maxWidth: '560px' }}>
+    <div className="page-enter" style={{ width: '100%', maxWidth: '560px', marginInline: 'auto' }}>
       {/* Page header */}
       <div style={{ marginBottom: '24px' }}>
-        <p style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.12em', color: 'var(--violet)', marginBottom: '5px' }}>Account</p>
+        <p style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.12em', color: 'var(--accent-text)', marginBottom: '5px' }}>Account</p>
         <h1 style={{ fontSize: '26px', fontWeight: 800, letterSpacing: '-0.04em', color: 'var(--ink)' }}>Settings</h1>
       </div>
 
@@ -144,13 +136,14 @@ const Settings = () => {
 
       {/* ── Appearance ── */}
       <Section title="Appearance">
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-          {[{ value: 'light', label: 'Light', icon: '☀️' }, { value: 'dark', label: 'Dark', icon: '🌙' }].map(opt => {
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(120px,1fr))', gap: '10px' }}>
+          {[{ value: 'light', label: 'Light', icon: '☀️' }, { value: 'dark', label: 'Dark', icon: '🌙' }, { value: 'system', label: 'System', icon: '◐' }].map(opt => {
             const active = theme === opt.value;
             return (
               <button
                 key={opt.value}
-                onClick={() => setTheme(opt.value)}
+                aria-pressed={active}
+                onClick={() => setThemeState(opt.value)}
                 style={{
                   display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px',
                   padding: '16px 12px', borderRadius: '10px', cursor: 'pointer',
@@ -181,8 +174,8 @@ const Settings = () => {
       {/* ── AI config ── */}
       <Section title="AI configuration">
         <div style={{ fontSize: '13px', color: 'var(--ink-secondary)', lineHeight: 1.7, display: 'flex', flexDirection: 'column', gap: '6px' }}>
-          <p>AI features use a shared backend service. Credentials are configured server-side in <code style={{ background: 'rgba(124,58,237,0.1)', color: 'var(--violet)', padding: '1px 5px', borderRadius: '4px', fontSize: '12px' }}>.env.local</code>.</p>
-          <p>Set <code style={{ background: 'rgba(124,58,237,0.1)', color: 'var(--violet)', padding: '1px 5px', borderRadius: '4px', fontSize: '12px' }}>GEMINI_API_KEY</code> and <code style={{ background: 'rgba(124,58,237,0.1)', color: 'var(--violet)', padding: '1px 5px', borderRadius: '4px', fontSize: '12px' }}>AI_MODEL</code> to enable live AI features.</p>
+          <p>AI features use a shared backend service. Credentials are configured server-side in <code style={{ background: 'rgba(124,58,237,0.1)', color: 'var(--accent-text)', padding: '1px 5px', borderRadius: '4px', fontSize: '12px' }}>.env.local</code>.</p>
+          <p>Set <code style={{ background: 'rgba(124,58,237,0.1)', color: 'var(--accent-text)', padding: '1px 5px', borderRadius: '4px', fontSize: '12px' }}>GEMINI_API_KEY</code> and <code style={{ background: 'rgba(124,58,237,0.1)', color: 'var(--accent-text)', padding: '1px 5px', borderRadius: '4px', fontSize: '12px' }}>AI_MODEL</code> to enable live AI features.</p>
         </div>
       </Section>
     </div>

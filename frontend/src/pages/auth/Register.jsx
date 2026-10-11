@@ -70,7 +70,7 @@ const Register = () => {
           className="btn-primary auth-submit"
           style={{ marginTop: '4px', minHeight: '44px', fontSize: '14px', fontWeight: 700, borderRadius: '10px' }}
         >
-          {!loading && 'Create account'}
+          {loading ? 'Creating account…' : 'Create account'}
         </button>
       </form>
 

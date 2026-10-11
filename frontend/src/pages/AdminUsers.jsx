@@ -1,3 +1,4 @@
+import { CollectionSkeleton, Modal } from '../components/WorkspaceUI';
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { authService } from '../services/authService';
@@ -90,16 +91,7 @@ const AdminUsers = () => {
     `${userData.name} ${userData.email} ${userData.role}`.toLowerCase().includes(searchQuery.trim().toLowerCase())
   );
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading users...</p>
-        </div>
-      </div>
-    );
-  }
+  if (loading) return <CollectionSkeleton label="Loading workspace accounts…" />;
 
   return (
     <div>
@@ -219,10 +211,9 @@ const AdminUsers = () => {
 
       {/* Role Change Modal */}
       {selectedUser && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="max-h-[90dvh] w-full max-w-md overflow-y-auto rounded-xl bg-white p-5 shadow-xl sm:p-6">
-            <h2 className="text-2xl font-bold mb-4">Change User Role</h2>
-            
+        <Modal title="Change User Role" onClose={() => { setSelectedUser(null); setNewRole(''); setError(''); }} busy={updating}>
+
+
             <div className="mb-6">
               <div className="flex items-center space-x-3 mb-4">
                 <Avatar user={selectedUser} size="md" />
@@ -285,8 +276,7 @@ const AdminUsers = () => {
                 {updating ? 'Updating...' : 'Update Role'}
               </button>
             </div>
-          </div>
-        </div>
+        </Modal>
       )}
     </div>
   );

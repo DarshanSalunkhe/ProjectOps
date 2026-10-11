@@ -1,3 +1,4 @@
+import { Modal, LoadingState } from './WorkspaceUI';
 import { useState, useEffect } from 'react';
 import { intelligenceService } from '../services/intelligenceService';
 import { ConfirmationDialog, ErrorState } from './WorkspaceUI';
@@ -300,7 +301,7 @@ export const AICommandCenter = ({ projectId, userRole, tasks = [], onUpdate }) =
                 placeholder="Additional details about the project..."
               />
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Deadline
@@ -652,7 +653,7 @@ export const AICommandCenter = ({ projectId, userRole, tasks = [], onUpdate }) =
             {replan.estimatedImpact && (
               <div className="bg-blue-50 border border-blue-200 rounded p-3 text-sm">
                 <div className="font-semibold text-blue-900 mb-2">Estimated Impact</div>
-                <div className="grid grid-cols-2 gap-2 text-blue-800">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-blue-800">
                   <div>Tasks Affected: {replan.estimatedImpact.tasksAffected}</div>
                   <div>Confidence: {replan.estimatedImpact.confidenceLevel}</div>
                   <div>Reassignments: {replan.estimatedImpact.reassignments}</div>
@@ -676,17 +677,11 @@ export const AICommandCenter = ({ projectId, userRole, tasks = [], onUpdate }) =
         </div>
       )}
 
-      {loading && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-sm">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4"></div>
-            <p className="text-center font-semibold">Running AI Analysis...</p>
-            <p className="text-center text-sm text-gray-600 mt-2">
-              Detecting risks, analyzing impact, generating recovery plan
-            </p>
-          </div>
-        </div>
-      )}
+      {loading && <Modal title="AI analysis in progress" busy>
+        <LoadingState variant="ai" label="Processing your project request…" />
+        <p className="text-center text-sm text-gray-600">AI suggestions will appear when the request completes. Review them before applying changes.</p>
+      </Modal>}
+
     </div>
   );
 };

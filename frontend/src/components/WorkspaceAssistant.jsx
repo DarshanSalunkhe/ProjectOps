@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { intelligenceService } from '../services/intelligenceService';
-import { StatusBadge } from './WorkspaceUI';
+import { StatusBadge, LoadingState } from './WorkspaceUI';
 
 const AssistantIcon = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -39,7 +39,7 @@ export default function WorkspaceAssistant({ project, onClose }) {
     <div className="assistant-heading"><span className="assistant-heading-title"><AssistantIcon />ProjectOps AI</span><div><button className="mini-button" aria-label="Refresh project analysis" disabled={!project || loading} onClick={() => setRevision(n => n + 1)}>↻</button><button className="mini-button" aria-label="Close AI assistant" onClick={onClose}>×</button></div></div>
     <div className="assistant-body">
       <div className="assistant-prompt">{project ? 'Show the risks and delivery health for this project.' : 'Help me keep my projects on track.'}</div>
-      {!project ? <><p>Select a project to see its live health and risk signals here.</p><Link className="assistant-link" to="/projects">Browse projects →</Link></> : loading ? <p role="status">Reviewing project health…</p> : error ? <div role="alert"><p>{error}</p><button className="btn-secondary mt-3" onClick={() => setRevision(n => n + 1)}>Try again</button></div> : analysis && <>
+      {!project ? <><p>Select a project to see its live health and risk signals here.</p><Link className="assistant-link" to="/projects">Browse projects →</Link></> : loading ? <LoadingState variant="ai" label="Loading project health…" /> : error ? <div role="alert"><p>{error}</p><button className="btn-secondary mt-3" onClick={() => setRevision(n => n + 1)}>Try again</button></div> : analysis && <>
         <p className="assistant-summary">Here’s the latest analysis for <strong>{project.name}</strong>.</p>
         <div className="assistant-health"><span><strong>{analysis.health?.score == null ? 'Insufficient data' : `${analysis.health.score} / 100`}</strong></span><StatusBadge status={analysis.health?.status} /></div>
         <p>{analysis.risks?.length ? `${analysis.risks.length} risk signals need your attention:` : 'No active risk signals were returned by the latest analysis.'}</p>

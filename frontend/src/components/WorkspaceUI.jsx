@@ -1,47 +1,52 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useId } from 'react';
 
 // ── Skeleton loading component ────────────────────────────────────────────────
 export const Skeleton = ({ w = '100%', h = '14px', r = '6px', style = {} }) => (
-  <div className="skeleton" style={{ width: w, height: h, borderRadius: r, ...style }} />
+  <div aria-hidden="true" className="skeleton" style={{ width: w, height: h, borderRadius: r, ...style }} />
 );
 
 export const DashboardSkeleton = () => (
-  <div style={{ padding: '0' }}>
-    {/* Header skeleton */}
-    <div style={{ marginBottom: '28px' }}>
-      <Skeleton w="120px" h="10px" style={{ marginBottom: '10px' }} />
-      <Skeleton w="280px" h="28px" r="8px" style={{ marginBottom: '8px' }} />
-      <Skeleton w="360px" h="13px" />
-    </div>
-    {/* Stat cards */}
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(160px,1fr))', gap: '16px', marginBottom: '24px' }}>
-      {[...Array(4)].map((_, i) => (
-        <div key={i} className="card" style={{ padding: '20px' }}>
-          <Skeleton w="40px" h="40px" r="10px" style={{ marginBottom: '14px' }} />
-          <Skeleton w="60px" h="28px" r="6px" style={{ marginBottom: '8px' }} />
-          <Skeleton w="90px" h="11px" />
-        </div>
-      ))}
-    </div>
-    {/* Content grid */}
-    <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '16px' }}>
-      <div className="card" style={{ padding: '20px', height: '200px' }}>
-        <Skeleton w="100px" h="14px" style={{ marginBottom: '16px' }} />
-        <Skeleton w="70px" h="40px" r="8px" style={{ marginBottom: '10px' }} />
-        <Skeleton h="6px" r="100px" />
-      </div>
-      <div className="card" style={{ padding: '20px', height: '200px' }}>
-        <Skeleton w="120px" h="14px" style={{ marginBottom: '16px' }} />
-        {[...Array(3)].map((_, i) => (
-          <div key={i} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '14px' }}>
-            <Skeleton w="140px" h="12px" />
-            <Skeleton w="60px" h="22px" r="100px" />
-          </div>
-        ))}
-      </div>
-    </div>
+  <div role="status" aria-label="Loading workspace dashboard" className="dashboard-skeleton">
+    <span className="sr-only">Loading workspace dashboard…</span>
+    <div className="dashboard-hero skeleton-hero"><Skeleton w="140px" h="12px" /><Skeleton w="70%" h="36px" /><Skeleton w="85%" h="14px" /></div>
+    <div className="metrics-grid">{Array.from({ length: 4 }, (_, i) => <div key={i} className="card stat-card"><Skeleton w="36px" h="36px" /><Skeleton w="60px" h="32px" /><Skeleton w="100px" h="14px" /></div>)}</div>
+    <div className="dashboard-primary-grid">{[0, 1].map(i => <div key={i} className="card"><Skeleton w="140px" h="20px" /><div className="skeleton-rows">{[0, 1, 2].map(j => <Skeleton key={j} h="26px" />)}</div></div>)}</div>
+    <div className="dashboard-secondary-grid">{[0, 1, 2].map(i => <div key={i} className="card"><Skeleton w="65%" h="20px" /><div className="skeleton-rows"><Skeleton h="50px" /><Skeleton h="50px" /></div></div>)}</div>
+    <div className="card"><Skeleton w="120px" h="20px" /><div className="skeleton-rows"><Skeleton h="50px" /></div></div>
   </div>
 );
+
+export const CollectionSkeleton = ({ label = 'Loading items…', count = 3 }) => <div role="status" aria-label={label}>
+  <span className="sr-only">{label}</span>
+  <div className="collection-grid">{Array.from({ length: count }, (_, i) => <div className="card" key={i}>
+    <Skeleton w="60%" h="20px" /><div className="skeleton-rows"><Skeleton h="14px" /><Skeleton w="80%" h="14px" /><Skeleton h="6px" /><Skeleton w="50%" h="16px" /></div>
+  </div>)}</div>
+</div>;
+
+export const StartupLoader = ({ label = 'Preparing your workspace…' }) => <div className="startup-loader" role="status">
+  <div className="startup-mark"><img src="/projectops-icon.svg" width="52" height="52" alt="" /></div>
+  <strong>ProjectOps</strong><p>{label}</p><div className="startup-line" aria-hidden="true" />
+</div>;
+
+export const Modal = ({ title, children, onClose, busy = false }) => {
+  const ref = useRef(null);
+  const titleId = useId();
+  const closeRef = useRef(onClose);
+  closeRef.current = onClose;
+  useEffect(() => {
+    const previous = document.activeElement;
+    ref.current?.showModal();
+    return () => { ref.current?.close(); previous?.focus(); };
+  }, []);
+  return <dialog ref={ref} className="workspace-dialog" aria-labelledby={titleId} onCancel={event => {
+    event.preventDefault(); if (!busy) closeRef.current?.();
+  }}>
+    <header className="dialog-heading"><div><p className="eyebrow">ProjectOps workspace</p><h2 id={titleId}>{title}</h2></div>
+      {onClose && <button type="button" className="btn btn-ghost" aria-label="Close dialog" disabled={busy} onClick={onClose}>×</button>}
+    </header>
+    {children}
+  </dialog>;
+};
 
 // ── Page header ───────────────────────────────────────────────────────────────
 export const PageHeader = ({ eyebrow, title, description, actions }) => (
@@ -57,7 +62,7 @@ export const PageHeader = ({ eyebrow, title, description, actions }) => (
 
 // ── Dashboard card ─────────────────────────────────────────────────────────────
 export const DashboardCard = ({ title, children, action, icon, accent }) => (
-  <section className="card" style={{ height: '100%' }}>
+  <section className="card dashboard-card" style={{ height: '100%' }}>
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px', marginBottom: '16px' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
         {icon && (
@@ -75,7 +80,7 @@ export const DashboardCard = ({ title, children, action, icon, accent }) => (
 
 // ── Stat card ─────────────────────────────────────────────────────────────────
 export const StatCard = ({ label, value, note, icon, accentColor = 'var(--violet)' }) => (
-  <div className="card card-interactive" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+  <div className="card stat-card" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
     <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '8px', marginBottom: '12px' }}>
       <div style={{ width: '36px', height: '36px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: `${accentColor}18`, flexShrink: 0 }}>
         {icon}
@@ -98,10 +103,10 @@ export const EmptyState = ({ title = 'Nothing here yet', description, children, 
 );
 
 // ── Loading state ─────────────────────────────────────────────────────────────
-export const LoadingState = ({ label = 'Loading…' }) => (
-  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '32px 16px', gap: '12px' }} role="status" aria-label={label}>
-    <div style={{ width: '32px', height: '32px', borderRadius: '50%', border: '3px solid rgba(124,58,237,0.2)', borderTopColor: 'var(--violet)', animation: 'spin 0.8s linear infinite' }} />
-    <p style={{ fontSize: '12px', color: 'var(--ink-muted)' }}>{label}</p>
+export const LoadingState = ({ label = 'Loading…', variant = 'default' }) => (
+  <div className={`loading-state loading-${variant}`} role="status">
+    <div className="processing-mark" aria-hidden="true">{variant === 'sync' ? '↻' : variant === 'ai' ? '✦' : <img src="/projectops-icon.svg" alt="" width="24" height="24" />}</div>
+    <p>{label}</p><div className="processing-dots" aria-hidden="true"><i /><i /><i /></div>
   </div>
 );
 
@@ -129,7 +134,7 @@ const STATUS_MAP = {
   PLANNING:  { cls: 'badge-gray',    label: 'Planning' },
   AT_RISK:   { cls: 'badge-warning', label: 'At Risk' },
   ON_HOLD:   { cls: 'badge-warning', label: 'On Hold' },
-  BLOCKED:   { cls: 'badge-danger',  label: 'Blocked' },
+  BLOCKED:   { cls: 'badge-warning',  label: 'Blocked' },
   CRITICAL:  { cls: 'badge-danger',  label: 'Critical' },
   HIGH:      { cls: 'badge-danger',  label: 'High' },
   MEDIUM:    { cls: 'badge-warning', label: 'Medium' },
@@ -148,7 +153,7 @@ export const ConfirmationDialog = ({ title, children, onConfirm, onClose, busy, 
   const ref = useRef(null);
   useEffect(() => { ref.current?.showModal(); }, []);
   return (
-    <dialog ref={ref} className="confirmation-dialog" onCancel={onClose}>
+    <dialog ref={ref} className="confirmation-dialog" aria-label={title} onCancel={event => { if (busy) event.preventDefault(); else onClose(); }}>
       <h2 style={{ fontSize: '17px', fontWeight: 700, letterSpacing: '-0.02em', marginBottom: '12px' }}>{title}</h2>
       <div style={{ fontSize: '13px', color: 'var(--ink-secondary)', lineHeight: 1.6, marginBottom: '20px' }}>{children}</div>
       <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>

@@ -1,3 +1,5 @@
+import { LoadingState } from './WorkspaceUI';
+import { useFeedback } from './Feedback';
 ﻿/**
  * Recovery Workspace
  * Editable delay-report form â†’ recovery proposals â†’ review/apply/reject
@@ -21,6 +23,7 @@ const OBJECTIVES = [
 ];
 
 export default function RecoveryWorkspace({ projectId, tasks = [], members = [] }) {
+  const notify = useFeedback();
   const [proposals, setProposals] = useState([]);
   const [loadingProposals, setLoadingProposals] = useState(true);
   const [generating, setGenerating] = useState(false);
@@ -76,6 +79,7 @@ export default function RecoveryWorkspace({ projectId, tasks = [], members = [] 
 
       await intelligenceService.generateReplan(projectId, problem);
       setSuccess('Recovery proposal generated.');
+      notify('Recovery proposal ready for review.');
       setShowForm(false);
       await fetchProposals();
     } catch (err) {
@@ -111,6 +115,8 @@ export default function RecoveryWorkspace({ projectId, tasks = [], members = [] 
 
   return (
     <div className="space-y-6">
+      {generating && <LoadingState variant="ai" label="Generating a recovery proposal…" />}
+      {loadingProposals && <LoadingState label="Loading recovery proposals…" />}
       <div className="flex items-center justify-between">
         <h3 style={{fontSize:'15px',fontWeight:700,color:'var(--ink)'}}>Recovery Workspace</h3>
         <button onClick={() => setShowForm(v => !v)} className="btn btn-primary" style={{minHeight:'32px',fontSize:'12px',gap:'5px'}}>
@@ -325,5 +331,3 @@ function ProposalCard({ proposal, onApply, onReject, applying, readOnly, tasks, 
     </div>
   );
 }
-
-

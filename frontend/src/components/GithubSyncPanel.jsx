@@ -1,8 +1,12 @@
+import { LoadingState } from './WorkspaceUI';
+import { useFeedback } from './Feedback';
 import {useEffect,useRef,useState} from 'react';
 import api from '../services/api';
 
 const activityLink=a=>/^https:\/\/github\.com\//i.test(a?.url||'')?a.url:null;
 export default function GithubSyncPanel({projectId,repoUrl,userRole,onUpdate}) {
+ const notify=useFeedback();
+ const [refreshing,setRefreshing]=useState(false);
  const [data,setData]=useState(null),[error,setError]=useState(''),[busy,setBusy]=useState(false),[loading,setLoading]=useState(true);
  const [form,setForm]=useState({enabled:false,integrationBranch:'',requiredChecks:'',requireConfirmation:true});
  const [tasks,setTasks]=useState([]),[selections,setSelections]=useState({}),[notice,setNotice]=useState('');
@@ -28,19 +32,20 @@ export default function GithubSyncPanel({projectId,repoUrl,userRole,onUpdate}) {
  },[projectId,repoUrl]);
  async function action(operation,message) {
   setBusy(true);setError('');setNotice('');
-  try{await operation();setNotice(message);await load(true);await onUpdate?.();}
+  try{await operation();setNotice(message);notify(message);await load(true);await onUpdate?.();}
   catch(e){setError(e.message||'Unable to save synchronization changes.');}
   finally{setBusy(false);}
  }
- if(loading)return <p style={{marginTop:'24px', fontSize:'13px', color:'var(--ink-muted)'}} role="status">Loading GitHub activity…</p>;
- return <section style={{marginTop:'24px'}} aria-label="GitHub Activity and AI Sync">
+ if(loading)return <LoadingState variant="sync" label="Loading GitHub activity…" />;
+ return <section className="sync-panel" style={{marginTop:'24px'}} aria-label="GitHub Activity and AI Sync">
   <div style={{display:'flex',flexWrap:'wrap',alignItems:'center',justifyContent:'space-between',gap:'8px',marginBottom:'16px'}}>
     <h3 style={{fontSize:'15px',fontWeight:700,color:'var(--ink)'}}>GitHub Activity &amp; AI Sync</h3>
-    <button className="btn btn-secondary" style={{minHeight:'30px',padding:'4px 12px',fontSize:'12px',gap:'5px'}} disabled={busy} onClick={()=>load()}>
+    <button className="btn btn-secondary" style={{minHeight:'30px',padding:'4px 12px',fontSize:'12px',gap:'5px'}} disabled={busy||refreshing} aria-busy={refreshing} onClick={async()=>{setRefreshing(true);try{await load();}finally{setRefreshing(false);}}}>
       <svg width="11" height="11" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M21 2v6h-6M3 12a9 9 0 0 1 15-6.7L21 8"/></svg>
-      Refresh activity
+      {refreshing ? 'Refreshing activity…' : 'Refresh activity'}
     </button>
   </div>
+  {busy&&<LoadingState variant="sync" label="Applying synchronization changes…" />}
   {error&&<p role="alert" style={{fontSize:'13px',color:'#DC2626',marginBottom:'10px',padding:'10px 14px',background:'rgba(239,68,68,0.08)',borderRadius:'8px',border:'1px solid rgba(239,68,68,0.2)'}}>{error}</p>}
   {notice&&<p role="status" style={{fontSize:'13px',color:'#0D9488',marginBottom:'10px',padding:'10px 14px',background:'rgba(20,184,166,0.08)',borderRadius:'8px',border:'1px solid rgba(20,184,166,0.2)'}}>{notice}</p>}
   {!data?.serviceEnabled&&data&&<p style={{fontSize:'13px',color:'var(--ink-secondary)',marginBottom:'12px'}}>Automatic synchronization is currently unavailable. Repository browsing remains available.</p>}

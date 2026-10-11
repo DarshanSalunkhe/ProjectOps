@@ -1,3 +1,4 @@
+import { CollectionSkeleton, Modal } from '../components/WorkspaceUI';
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { membershipService } from '../services/membershipService';
@@ -150,16 +151,7 @@ const ProjectMembers = () => {
     return roleClasses[role] || 'badge-gray';
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading members...</p>
-        </div>
-      </div>
-    );
-  }
+  if (loading) return <CollectionSkeleton label="Loading project members…" />;
 
   if (!project) {
     return (
@@ -298,10 +290,8 @@ const ProjectMembers = () => {
 
       {/* Invite Member Modal */}
       {showInviteModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg max-w-md w-full">
-            <div className="p-6">
-              <h2 className="text-2xl font-bold mb-4">Invite Member</h2>
+        <Modal title="Invite Member" onClose={() => { setShowInviteModal(false); setError(''); }} busy={submitting}>
+
 
               {error && (
                 <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-4">
@@ -359,16 +349,12 @@ const ProjectMembers = () => {
                   </button>
                 </div>
               </form>
-            </div>
-          </div>
-        </div>
+        </Modal>
       )}
 
       {/* Invitation Success Modal */}
       {showInvitationLink && invitationResult && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg max-w-lg w-full">
-            <div className="p-6">
+        <Modal title="Invitation Sent Successfully" onClose={handleCloseInvitationLink}>
               <div className="flex items-center justify-center mb-4">
                 <div className="bg-green-100 rounded-full h-16 w-16 flex items-center justify-center">
                   <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -377,7 +363,7 @@ const ProjectMembers = () => {
                 </div>
               </div>
 
-              <h2 className="text-2xl font-bold mb-2 text-center">Invitation Sent Successfully</h2>
+
               <p className="text-gray-600 text-center mb-6">
                 An invitation email has been sent to <strong>{invitationResult.invited_email}</strong>.
                 They can join the project using the link in the email.
@@ -438,9 +424,7 @@ const ProjectMembers = () => {
                   Done
                 </button>
               </div>
-            </div>
-          </div>
-        </div>
+        </Modal>
       )}
     </div>
   );

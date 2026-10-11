@@ -1,14 +1,16 @@
+import { StartupLoader } from '../components/WorkspaceUI';
 import { Outlet, Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 const AuthLayout = () => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, loading } = useAuth();
+  if (loading) return <StartupLoader />;
   if (isAuthenticated) return <Navigate to="/dashboard" replace />;
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', minHeight: '100dvh', background: '#060A12' }}>
+    <div className="auth-shell">
       {/* ── Left: brand panel ── */}
-      <div style={{
+      <div className="auth-aside" style={{
         position: 'relative', display: 'flex', flexDirection: 'column',
         justifyContent: 'center', padding: 'clamp(40px,8vh,80px) clamp(32px,8%,96px)',
         background: 'linear-gradient(145deg, #0B1220 0%, #1a1042 55%, #0B1220 100%)',
@@ -36,6 +38,11 @@ const AuthLayout = () => {
             Autonomous task management, AI-driven risk analysis, and real-time GitHub synchronization — all in one workspace.
           </p>
 
+          <div className="execution-visual" aria-hidden="true">
+            <div className="execution-label"><span>✦</span> PROJECT EXECUTION</div>
+            <div className="execution-path"><span>Define</span><i /><span className="execution-active">Plan</span><i /><span>Deliver</span></div>
+            <div className="execution-signal"><span>◈</span><div><strong>Clarity at every step</strong><p>Plan thoughtfully. Work together. Move forward.</p></div></div>
+          </div>
           {/* Feature bullets */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             {[
@@ -53,8 +60,8 @@ const AuthLayout = () => {
       </div>
 
       {/* ── Right: form panel ── */}
-      <div style={{ background: '#0D1117', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 'clamp(32px,6vh,60px) clamp(24px,5%,80px)' }}>
-        <div style={{ width: '100%', maxWidth: '400px' }}>
+      <div className="auth-main" style={{ background: '#0D1117', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 'clamp(32px,6vh,60px) clamp(24px,5%,80px)' }}>
+        <div className="auth-form-surface" style={{ width: '100%', maxWidth: '440px' }}>
           <Outlet />
           <p style={{ marginTop: '28px', textAlign: 'center', fontSize: '11px', color: 'rgba(255,255,255,0.18)', letterSpacing: '0.03em' }}>
             A focused space for better project work
@@ -62,14 +69,7 @@ const AuthLayout = () => {
         </div>
       </div>
 
-      {/* Mobile: stack vertically */}
-      <style>{`
-        @media (max-width: 768px) {
-          div[style*="grid"] { display: flex !important; flex-direction: column !important; }
-          div[style*="grid"] > div:first-child { padding: 36px 24px 28px !important; min-height: auto !important; }
-          div[style*="grid"] > div:first-child h1 { font-size: 28px !important; }
-        }
-      `}</style>
+
     </div>
   );
 };

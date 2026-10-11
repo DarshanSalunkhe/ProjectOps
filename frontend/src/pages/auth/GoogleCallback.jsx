@@ -1,3 +1,4 @@
+import { LoadingState } from '../../components/WorkspaceUI';
 import { useEffect, useState, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
@@ -132,11 +133,11 @@ const GoogleCallback = () => {
   }, []);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+    <div className="min-h-screen flex items-center justify-center p-4">
       <div className="card max-w-md w-full text-center">
         {status === 'processing' && (
           <>
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4"></div>
+            <LoadingState label="Completing Google sign in…" />
             <h2 className="text-xl font-semibold text-gray-900 mb-2">
               Authenticating with Google
             </h2>
@@ -146,7 +147,7 @@ const GoogleCallback = () => {
 
         {status === 'exchanging' && (
           <>
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4"></div>
+            <LoadingState label="Completing Google sign in…" />
             <h2 className="text-xl font-semibold text-gray-900 mb-2">
               Completing Sign In
             </h2>

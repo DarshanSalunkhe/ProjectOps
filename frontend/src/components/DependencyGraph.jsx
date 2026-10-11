@@ -47,7 +47,7 @@ export const DependencyGraph = ({ tasks = [], dependencies = [] }) => {
   };
 
   return (
-    <div className="card"><div className="flex flex-wrap gap-2 items-center justify-between mb-4"><div><h3 className="font-semibold">Dependency map</h3><p className="text-xs text-slate-400 mt-1">Arrows flow from prerequisites to dependent tasks. Scroll to explore.</p></div><div className="flex gap-2"><button className="btn-secondary" aria-label="Zoom out" disabled={zoom <= .5} onClick={() => setZoom(z => Math.max(.5,z-.25))}>−</button><button className="btn-secondary" onClick={() => setZoom(1)}>Reset</button><button className="btn-secondary" aria-label="Zoom in" disabled={zoom >= 2} onClick={() => setZoom(z => Math.min(2,z+.25))}>+</button></div></div><div className="overflow-auto max-h-[650px]">
+    <div className="card"><div className="flex flex-wrap gap-2 items-center justify-between mb-4"><div><h3 className="font-semibold">Dependency map</h3><p className="text-xs text-slate-400 mt-1">Arrows flow from prerequisites to dependent tasks. Scroll to explore.</p></div><div className="flex gap-2"><button className="btn-secondary" aria-label="Zoom out" disabled={zoom <= .5} onClick={() => setZoom(z => Math.max(.5,z-.25))}>−</button><button className="btn-secondary" onClick={() => setZoom(1)}>Reset</button><button className="btn-secondary" aria-label="Zoom in" disabled={zoom >= 2} onClick={() => setZoom(z => Math.min(2,z+.25))}>+</button></div></div><div className="dependency-scroll overflow-auto max-h-[650px]" role="region" aria-label="Scrollable task dependency map" tabIndex={0}>
 
       <svg
         ref={svgRef}

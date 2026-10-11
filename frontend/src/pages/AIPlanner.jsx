@@ -1,3 +1,5 @@
+import { LoadingState } from '../components/WorkspaceUI';
+import { useFeedback } from '../components/Feedback';
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { intelligenceService } from '../services/intelligenceService';
@@ -5,6 +7,7 @@ import { projectService } from '../services/projectService';
 
 const AIPlanner = () => {
   const navigate = useNavigate();
+  const notify = useFeedback();
   const [searchParams] = useSearchParams();
   const initialProjectId = searchParams.get('projectId');
 
@@ -53,6 +56,7 @@ const AIPlanner = () => {
       setGeneratedPlan(plan);
       setAiAvailable(plan?.aiAvailable !== false);
       setStep('preview');
+      notify('Plan ready for review.');
     } catch (err) {
       setError(err.response?.data?.message || err.message || 'Failed to generate plan');
     } finally {
@@ -66,6 +70,7 @@ const AIPlanner = () => {
     setLoading(true);
     try {
       await intelligenceService.applyPlan(selectedProject, generatedPlan);
+      notify('Approved plan applied to the project.');
       navigate(`/projects/${selectedProject}?tab=tasks`);
     } catch (err) {
       setError(err.response?.data?.message || err.message || 'Failed to apply plan');
@@ -97,12 +102,13 @@ const AIPlanner = () => {
         </div>
 
         <div className="card">
-          <form onSubmit={handleGenerate} className="space-y-5">
+          {loading && <LoadingState variant="ai" label="Generating your project plan…" />}
+        <form onSubmit={handleGenerate} className="space-y-5">
             {mode === 'personalized' ? (
               <>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Project *</label>
-                  <select className="input" value={selectedProject} onChange={e => setSelectedProject(e.target.value)}
+                  <select id="planner-project" aria-label="Select project" className="input" value={selectedProject} onChange={e => setSelectedProject(e.target.value)}
                     required disabled={projectsLoading}>
                     <option value="">{projectsLoading ? 'Loading…' : 'Select a project'}</option>
                     {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
@@ -113,19 +119,19 @@ const AIPlanner = () => {
                   </p>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="planner-instructions" className="block text-sm font-medium text-gray-700 mb-1">
                     Additional instructions <span className="text-slate-400 text-xs">(optional)</span>
                   </label>
-                  <textarea className="input" rows={3}
+                  <textarea id="planner-instructions" className="input" rows={3}
                     value={formData.instructions}
                     onChange={e => setFormData(f => ({ ...f, instructions: e.target.value }))}
                     placeholder="e.g. Focus on backend first, assign API tasks to Alice, keep MVP scope…" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="planner-constraints" className="block text-sm font-medium text-gray-700 mb-1">
                     Constraints <span className="text-slate-400 text-xs">(optional)</span>
                   </label>
-                  <textarea className="input" rows={2}
+                  <textarea id="planner-constraints" className="input" rows={2}
                     value={formData.constraints}
                     onChange={e => setFormData(f => ({ ...f, constraints: e.target.value }))}
                     placeholder="e.g. No work on weekends, Bob unavailable next week…" />
@@ -143,38 +149,38 @@ const AIPlanner = () => {
                     placeholder="e.g. Build an e-commerce platform with payments and admin dashboard" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Additional details</label>
-                  <textarea className="input" rows={2}
+                  <label htmlFor="planner-description" className="block text-sm font-medium text-gray-700 mb-1">Additional details</label>
+                  <textarea id="planner-description" className="input" rows={2}
                     value={formData.description}
                     onChange={e => setFormData(f => ({ ...f, description: e.target.value }))}
                     placeholder="Specific requirements, constraints, or preferences…" />
                 </div>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Deadline</label>
-                    <input type="date" name="deadline" className="input"
+                    <label htmlFor="planner-deadline" className="block text-sm font-medium text-gray-700 mb-1">Deadline</label>
+                    <input id="planner-deadline" type="date" name="deadline" className="input"
                       value={formData.deadline}
                       onChange={e => setFormData(f => ({ ...f, deadline: e.target.value }))} />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Team size</label>
-                    <input type="number" min={1} max={20} className="input"
+                    <label htmlFor="planner-teamSize" className="block text-sm font-medium text-gray-700 mb-1">Team size</label>
+                    <input id="planner-teamSize" type="number" min={1} max={20} className="input"
                       value={formData.teamSize}
                       onChange={e => setFormData(f => ({ ...f, teamSize: e.target.value }))} />
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="planner-techStack" className="block text-sm font-medium text-gray-700 mb-1">
                     Tech stack <span className="text-slate-400 text-xs">(comma-separated)</span>
                   </label>
-                  <input type="text" className="input"
+                  <input id="planner-techStack" type="text" className="input"
                     value={formData.techStack}
                     onChange={e => setFormData(f => ({ ...f, techStack: e.target.value }))}
                     placeholder="React, Node.js, PostgreSQL…" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Apply to project</label>
-                  <select className="input" value={selectedProject} onChange={e => setSelectedProject(e.target.value)}
+                  <select id="planner-project" aria-label="Select project" className="input" value={selectedProject} onChange={e => setSelectedProject(e.target.value)}
                     disabled={projectsLoading}>
                     <option value="">{projectsLoading ? 'Loading…' : 'Choose a project to apply the plan (optional here)'}</option>
                     {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
@@ -184,11 +190,11 @@ const AIPlanner = () => {
             )}
 
             {error && (
-              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded text-sm">{error}</div>
+              <div role="alert" className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded text-sm">{error}</div>
             )}
 
             <div className="flex gap-3 pt-2">
-              <button type="submit" disabled={loading} className="btn-primary flex-1">
+              <button type="submit" aria-busy={loading} disabled={loading} className="btn-primary flex-1">
                 {loading ? 'Generating…' : (
                   <span className="flex items-center gap-2">
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -348,7 +354,7 @@ const AIPlanner = () => {
           {!selectedProject && (
             <div className="mb-3">
               <label className="block text-sm font-medium text-gray-700 mb-1">Select project *</label>
-              <select className="input" value={selectedProject}
+              <select id="planner-project" aria-label="Select project" className="input" value={selectedProject}
                 onChange={e => setSelectedProject(e.target.value)} disabled={projectsLoading}>
                 <option value="">{projectsLoading ? 'Loading…' : 'Choose a project'}</option>
                 {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
@@ -361,7 +367,7 @@ const AIPlanner = () => {
               Duplicate titles are checked — existing tasks will not be overwritten.
             </p>
           )}
-          {error && <div className="bg-red-50 border border-red-200 text-red-700 px-3 py-2 rounded text-sm mb-3">{error}</div>}
+          {error && <div role="alert" className="bg-red-50 border border-red-200 text-red-700 px-3 py-2 rounded text-sm mb-3">{error}</div>}
           <div className="flex gap-3">
             <button onClick={handleApply}
               disabled={!selectedProject || loading}
